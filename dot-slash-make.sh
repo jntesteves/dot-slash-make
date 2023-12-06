@@ -6,12 +6,16 @@
 # Do NOT make changes to this file, your commands go in the ./make file
 #
 log_error() { printf 'ERROR %s\n' "$*" >&2; }
+log_warn() { printf 'WARN %s\n' "$*" >&2; }
 log_info() { printf '%s\n' "$*"; }
-log_debug() { [ "$BUILD_DEBUG" ] && printf 'DEBUG %s\n' "$*"; }
+log_debug() { :; }
+log_trace() { :; }
 abort() {
     log_error "$*"
     exit 1
 }
+[ "$BUILD_DEBUG" ] && log_debug() { printf 'DEBUG %s\n' "$*"; }
+case "$BUILD_DEBUG" in *trace*) log_trace() { printf 'TRACE %s\n' "$*"; } ;; esac
 
 # Escape text for use in a shell script single-quoted string (shell builtin version)
 # This function uses only shell builtins and has no external dependencies (f.e. on sed)
@@ -54,7 +58,7 @@ __quote_eval_cmd() (
 run() {
     log_info "$*"
     __eval_cmd="$(__quote_eval_cmd "$@")"
-    log_debug "dot-slash-make: run() __eval_cmd=$__eval_cmd"
+    log_trace "dot-slash-make: run() __eval_cmd=$__eval_cmd"
     (eval "$__eval_cmd") || abort 'dot-slash-make: Command failed, aborting'
 }
 
@@ -62,7 +66,7 @@ run() {
 run_() {
     log_info "$*"
     __eval_cmd="$(__quote_eval_cmd "$@")"
-    log_debug "dot-slash-make: run_() __eval_cmd=$__eval_cmd"
+    log_trace "dot-slash-make: run_() __eval_cmd=$__eval_cmd"
     (eval "$__eval_cmd") || log_info 'dot-slash-make: Command failed, ignoring failure status'
 }
 
@@ -75,22 +79,59 @@ validate_var_name() {
 }
 
 # Use indirection to dynamically set a variable from argument NAME=VALUE
-set_variable() {
+__set_variable_from_cli_arg() {
     __fn_arguments="$*"
     __var_name="${__fn_arguments%%=*}"
     __var_value="${__fn_arguments#*=}"
     if validate_var_name "$__var_name"; then
         eval "$__var_name='$(escape_single_quotes "$__var_value")'"
-        eval "log_debug \"dot-slash-make: set_variable() ${__var_name}=\$${__var_name}\""
+        __cli_parameters_list="${__cli_parameters_list}
+${__var_name}"
+        eval "log_debug \"dot-slash-make: __set_variable_from_cli_arg() ${__var_name}=\$${__var_name}\""
+        case "$__var_value" in
+            [*~.[]* | /*\** | /*\[*\]*)
+                log_warn "dot-slash-make: Possible glob expansion attempt detected on parameter '${__var_name}'." \
+                    "CLI parameters do NOT support shell globbing. If your intention is to allow glob expansion to " \
+                    "happen, use an environmental variable instead"
+                ;;
+        esac
     else
         abort "dot-slash-make: Invalid variable name $__var_name"
     fi
 }
 
+# Check if the given name was provided as an argument in the CLI
+__is_in_cli_parameters_list() (
+    var_name="$1"
+    log_trace "dot-slash-make: __is_in_cli_parameters_list() var_name=${var_name} __cli_parameters_list=${__cli_parameters_list}"
+    for arg in $__cli_parameters_list; do
+        log_trace "dot-slash-make: __is_in_cli_parameters_list() loop arg=${arg}"
+        [ "$var_name" = "$arg" ] && return 0
+    done
+    return 1
+)
+
+# Set variable from arguments NAME VALUE, only if it was not overridden by a CLI argument
+param() {
+    __var_name="$1"
+    __var_value="$2"
+    if validate_var_name "$__var_name"; then
+        if __is_in_cli_parameters_list "$__var_name"; then
+            log_debug "dot-slash-make: param() '$__var_name' found in CLI parameters list, ignoring"
+        else
+            eval "$__var_name='$(escape_single_quotes "$__var_value")'"
+            eval "log_debug \"dot-slash-make: param() ${__var_name}=\$${__var_name}\""
+        fi
+    else
+        abort "dot-slash-make: param() Invalid variable name $__var_name"
+    fi
+}
+
+__cli_parameters_list=
 __targets=
 for __arg in "$@"; do
     case "$__arg" in
-        [_a-zA-Z]*=*) set_variable "$__arg" ;;
+        [_a-zA-Z]*=*) __set_variable_from_cli_arg "$__arg" ;;
         -*) abort "dot-slash-make: Unrecognized option '${__arg}'" ;;
         *) __targets="${__targets}
 ${__arg}" ;;

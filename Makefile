@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: Unlicense
-ifndef PREFIX
 PREFIX := ~/.local
-endif
 
 .PHONY: build
 build:

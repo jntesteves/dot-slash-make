@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Unlicense
 . ./dot-slash-make.sh
 
-[ "$PREFIX" ] || PREFIX=~/.local
+param PREFIX ~/.local
 
 for __target in "$@"; do
     case "$__target" in

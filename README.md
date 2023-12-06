@@ -17,9 +17,11 @@ This repository includes an example [Makefile](Makefile) which is equivalent to 
 Actually, writing a ./make file might be easier for you than writing a Makefile. The ./make file is written in shell script, a language you might already know, while a Makefile is written in a [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) full of idiosyncrasies few people fully understand (.PHONY? `=` vs `:=`).
 
 The following CLI behaviors were copied from Make:
-* Variables can be set in arguments of the form NAME=VALUE. Ex.: `./make install PREFIX=/local`
+* Variables can be set in arguments of the form NAME=VALUE, f.e. `./make install PREFIX=/local`  
+  * Important caveat: this form does not support shell glob expansion, like `~/`, `./*`, etc.  
+  This form only exists for easier migration from Make, but using environmental variables should always be preferred, so the same example as above would be better written as: `PREFIX=/local ./make install`
 * Any other arguments not starting with a `-` (dash) are considered targets (AKA recipes)
-* Many targets can be called from a single invocation. Ex.: `./make lint build test`
+* Many targets can be called from a single invocation, f.e. `./make lint build test`
 
 ## Usage
 
@@ -27,9 +29,10 @@ dot-slash-make is meant to be vendored (copied) into your repository. Just copy 
 
 ### Available functions
 
-`run`: Evaluate command in a sub-shell, abort on error (equivalent to a normal command in a Make recipe)  
-`run_`: Evaluate command in a sub-shell, ignore returned status code (equivalent to starting a line with a `-` in Make)  
-`log_error`, `log_info`, `log_debug`, `abort`: Logging functions (set `BUILD_DEBUG=1` for debug messages)
+* `param`: Set variable from arguments NAME VALUE, only if it was not overridden by a CLI argument (this is the same behavior as a variable definition in Make)
+* `run`: Evaluate command in a sub-shell, abort on error (equivalent to a normal command in a Makefile)
+* `run_`: Evaluate command in a sub-shell, ignore returned status code (equivalent to starting a line with a `-` in Make)
+* `log_error`, `log_info`, `log_debug`, `log_trace`, `abort`: Logging functions (set `BUILD_DEBUG=1` for debug messages)
 
 ## Dependencies
 dot-slash-make only needs a POSIX-compatible shell, there are no external dependencies, not even Unix core utilities.
