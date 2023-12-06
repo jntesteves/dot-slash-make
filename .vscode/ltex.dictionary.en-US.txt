@@ -1,0 +1,12 @@
+builtins
+Containerfile
+contr
+globbing
+ifndef
+ltex
+NONINFRINGEMENT
+POSIX
+shellcheck
+shfmt
+UNLICENSE
+vendored
