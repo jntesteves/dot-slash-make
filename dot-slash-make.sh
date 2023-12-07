@@ -41,39 +41,47 @@ upgrade_from_dash_to_bash() {
     fi
 }
 
-# Escape text for use in a shell script single-quoted string (shell builtin version)
+# Substitute every instance of character in text with replacement text
 # This function uses only shell builtins and has no external dependencies (f.e. on sed)
-# This is slower than using sed on big inputs, but faster on many calls with small inputs
-escape_single_quotes() (
-    arguments="$*"
-    final_quote=
-    case "$arguments" in
-        *\') final_quote="'\\''" ;;
+# This is slower than using sed on big inputs, but faster on many invocations with small inputs
+substitute_character_builtin() (
+    char="$1"
+    replacement_text="$2"
+    shift 2
+    text="$*"
+    trailing_match=
+    case "$text" in
+        *"$char") [ "$ZSH_VERSION" ] || trailing_match="$replacement_text" ;;
     esac
-    set -f # Disable globbing. This ensures that the word-splitting is safe
-    old_ifs=$IFS
-    IFS=\'
+    old_ifs="$IFS"
+    IFS="$char"
+    set -f # Disable globbing. This ensures word-splitting is safe
     # shellcheck disable=2086
-    set -- $arguments # Create arguments list splitting at each occurrence of IFS
-    IFS=$old_ifs
-    set +f # Re-enable globbing
+    set -- $text # Create arguments list splitting at each occurrence of IFS
+    set +f       # Re-enable globbing
+    IFS="$old_ifs"
     i=0
     arg_count="$#"
     for field in "$@"; do
         i=$((i + 1))
         if [ "$i" -eq "$arg_count" ]; then
-            printf '%s%s' "$field" "$final_quote"
+            printf '%s%s' "$field" "$trailing_match"
         else
-            printf "%s'\\\\''" "$field"
+            printf '%s%s' "$field" "$replacement_text"
         fi
     done
+)
+
+# Escape text for use in a shell script single-quoted string (shell builtin version)
+escape_single_quotes_builtin() (
+    substitute_character_builtin \' "'\\''" "$*"
 )
 
 # Wrap all arguments in single-quotes and concatenate them
 __quote_eval_cmd() (
     escaped_text=
     for arg in "$@"; do
-        escaped_text="${escaped_text} '$(escape_single_quotes "$arg")'"
+        escaped_text="${escaped_text} '$(escape_single_quotes_builtin "$arg")'"
     done
     printf '%s\n' "$escaped_text"
 )
@@ -108,7 +116,7 @@ __set_variable_from_cli_arg() {
     __var_name="${__fn_arguments%%=*}"
     __var_value="${__fn_arguments#*=}"
     if validate_var_name "$__var_name"; then
-        eval "$__var_name='$(escape_single_quotes "$__var_value")'"
+        eval "$__var_name='$(escape_single_quotes_builtin "$__var_value")'"
         __cli_parameters_list="${__cli_parameters_list}
 ${__var_name}"
         eval "log_debug \"dot-slash-make: __set_variable_from_cli_arg() ${__var_name}=\$${__var_name}\""
@@ -143,7 +151,7 @@ param() {
         if __is_in_cli_parameters_list "$__var_name"; then
             log_debug "dot-slash-make: param() '$__var_name' found in CLI parameters list, ignoring"
         else
-            eval "$__var_name='$(escape_single_quotes "$__var_value")'"
+            eval "$__var_name='$(escape_single_quotes_builtin "$__var_value")'"
             eval "log_debug \"dot-slash-make: param() ${__var_name}=\$${__var_name}\""
         fi
     else
