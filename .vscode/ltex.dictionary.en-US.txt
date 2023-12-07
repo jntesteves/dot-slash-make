@@ -1,4 +1,6 @@
 builtins
+cmdline
+cntrl
 Containerfile
 contr
 globbing
@@ -6,6 +8,7 @@ ifndef
 ltex
 NONINFRINGEMENT
 POSIX
+realpath
 shellcheck
 shfmt
 UNLICENSE
