@@ -110,53 +110,40 @@ validate_var_name() {
     esac
 }
 
-# Use indirection to dynamically set a variable from argument NAME=VALUE
-__set_variable_from_cli_arg() {
-    __fn_arguments="$*"
-    __var_name="${__fn_arguments%%=*}"
-    __var_value="${__fn_arguments#*=}"
-    if validate_var_name "$__var_name"; then
-        eval "$__var_name='$(escape_single_quotes_builtin "$__var_value")'"
-        __cli_parameters_list="${__cli_parameters_list}
-${__var_name}"
-        eval "log_debug \"dot-slash-make: __set_variable_from_cli_arg() ${__var_name}=\$${__var_name}\""
-        case "$__var_value" in
-            [*~.[]* | /*\** | /*\[*\]*)
-                log_warn "dot-slash-make: Possible glob expansion attempt detected on parameter '${__var_name}'." \
-                    "CLI parameters do NOT support shell globbing. If your intention is to allow glob expansion to " \
-                    "happen, use an environmental variable instead"
-                ;;
-        esac
-    else
-        abort "dot-slash-make: Invalid variable name $__var_name"
-    fi
-}
-
 # Check if the given name was provided as an argument in the CLI
 __is_in_cli_parameters_list() (
     var_name="$1"
-    log_trace "dot-slash-make: __is_in_cli_parameters_list() var_name=${var_name} __cli_parameters_list=${__cli_parameters_list}"
+    log_trace "dot-slash-make: __is_in_cli_parameters_list() var_name='${var_name}' __cli_parameters_list='${__cli_parameters_list}'"
     for arg in $__cli_parameters_list; do
-        log_trace "dot-slash-make: __is_in_cli_parameters_list() loop arg=${arg}"
+        log_trace "dot-slash-make: __is_in_cli_parameters_list() loop arg='${arg}'"
         [ "$var_name" = "$arg" ] && return 0
     done
     return 1
 )
 
-# Set variable from arguments NAME VALUE, only if it was not overridden by a CLI argument
-param() {
-    __var_name="$1"
-    __var_value="$2"
+# Use indirection to dynamically set a variable from argument NAME=VALUE
+__set_variable_cli_override() {
+    __fn_param=
+    [ "$1" = .param ] && __fn_param=' param()' && shift
+    __fn_arguments="$*"
+    __var_name="${__fn_arguments%%=*}"
+    __var_value="${__fn_arguments#*=}"
     if validate_var_name "$__var_name"; then
-        if __is_in_cli_parameters_list "$__var_name"; then
+        if [ "$__fn_param" ] && __is_in_cli_parameters_list "$__var_name"; then
             log_debug "dot-slash-make: param() '$__var_name' found in CLI parameters list, ignoring"
-        else
-            eval "$__var_name='$(escape_single_quotes_builtin "$__var_value")'"
-            eval "log_debug \"dot-slash-make: param() ${__var_name}=\$${__var_name}\""
+            return
         fi
+        eval "$__var_name='$(escape_single_quotes_builtin "$__var_value")'"
+        [ "$__fn_param" ] || __cli_parameters_list="${__cli_parameters_list}${__var_name} "
+        eval "log_debug \"dot-slash-make: __set_variable_cli_override() ${__var_name}=\$${__var_name}\""
     else
-        abort "dot-slash-make: param() Invalid variable name $__var_name"
+        abort "dot-slash-make:$__fn_param Invalid variable name '$__var_name'"
     fi
+}
+
+# Set variable from argument NAME=VALUE, only if it was not overridden by an argument on the CLI
+param() {
+    __set_variable_cli_override .param "$@"
 }
 
 upgrade_from_dash_to_bash "$@"
@@ -164,14 +151,10 @@ __cli_parameters_list=
 __targets=
 for __arg in "$@"; do
     case "$__arg" in
-        [_a-zA-Z]*=*) __set_variable_from_cli_arg "$__arg" ;;
+        [_a-zA-Z]*=*) __set_variable_cli_override "$__arg" ;;
         -*) abort "dot-slash-make: Unrecognized option '${__arg}'" ;;
-        *) __targets="${__targets}
-${__arg}" ;;
+        *) __targets="${__targets}${__arg} " ;;
     esac
 done
-
-# shellcheck disable=2086
-set -- $__targets
-[ "$1" ] || set -- ''
-log_debug "dot-slash-make: targets list: '$*'"
+[ "$__targets" ] || __targets=-
+log_debug "dot-slash-make: targets list: '${__targets}'"

@@ -2,23 +2,24 @@
 # SPDX-License-Identifier: Unlicense
 . ./dot-slash-make.sh
 
-param PREFIX ~/.local
+param BUILD_DIR=./build
+param PREFIX="${HOME}/.local"
 
-for __target in "$@"; do
-    case "$__target" in
-        build | '')
-            run echo 'Building...'
+for __target in ${__targets}; do
+    case "${__target}" in
+        build | -)
+            run echo build-command "${BUILD_DIR}"
             ;;
         install)
-            run echo 'Installing...' "PREFIX=${PREFIX}"
+            run echo install-command "${PREFIX}"
             ;;
         uninstall)
-            run echo 'Uninstalling...' "PREFIX=${PREFIX}"
+            run echo uninstall-command "${PREFIX}"
             ;;
         clean)
-            run_ echo 'Cleaning...'
+            run_ echo clean-command "${BUILD_DIR}"
             run_ return 1
-            run_ echo 'this line is reachable because run_ ignores errors!'
+            run_ echo 'This line is reachable because run_ ignores errors!'
             run return 1
             run echo 'This line in unreachable'
             ;;

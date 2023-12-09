@@ -1,23 +1,24 @@
 # SPDX-License-Identifier: Unlicense
+BUILD_DIR := ./build
 PREFIX := ~/.local
 
 .PHONY: build
 build:
-	echo 'Building...'
+	echo build-command "$(BUILD_DIR)"
 
 .PHONY: install
 install:
-	echo 'Installing...' "PREFIX=$(PREFIX)"
+	echo install-command "$(PREFIX)"
 
 .PHONY: uninstall
 uninstall:
-	echo 'Uninstalling...' "PREFIX=$(PREFIX)"
+	echo uninstall-command "$(PREFIX)"
 
 .PHONY: clean
 clean:
-	-echo 'Cleaning...'
+	-echo clean-command "$(BUILD_DIR)"
 	-return 1
-	-echo 'this line is reachable because - ignores errors!'
+	-echo 'This line is reachable because - ignores errors!'
 	return 1
 	echo 'This line in unreachable'
 

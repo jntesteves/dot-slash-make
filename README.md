@@ -17,10 +17,10 @@ This repository includes an example [Makefile](Makefile) which is equivalent to 
 Actually, writing a ./make file might be easier for you than writing a Makefile. The ./make file is written in shell script, a language you might already know, while a Makefile is written in a [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) full of idiosyncrasies few people fully understand (.PHONY? `=` vs `:=`).
 
 The following CLI behaviors were copied from Make:
-* Variables can be set in arguments of the form NAME=VALUE, f.e. `./make install PREFIX=/local`  
-  * Important caveat: this form does not support shell glob expansion, like `~/`, `./*`, etc.  
-  This form only exists for easier migration from Make, but using environmental variables should always be preferred, so the same example as above would be better written as: `PREFIX=/local ./make install`
-* Any other arguments not starting with a `-` (dash) are considered targets (AKA recipes)
+* Variable overrides can be set in arguments of the form NAME=VALUE, f.e. `./make install PREFIX=/local`  
+  * Caveat: this form does not allow tilde expansion `~/` (except on bash, which does tilde expansion when parsing this kind of argument)  
+  Prefer using the variable `$HOME` instead of tilde expansion  
+* Any other arguments not starting with a `-` (dash) are considered targets
 * Many targets can be called from a single invocation, f.e. `./make lint build test`
 
 ## Usage
@@ -29,7 +29,7 @@ dot-slash-make is meant to be vendored (copied) into your repository. Just copy 
 
 ### Available functions
 
-* `param`: Set variable from arguments NAME VALUE, only if it was not overridden by a CLI argument (this is the same behavior as a variable definition in Make)
+* `param`: Set variable from argument NAME=VALUE, only if it was not overridden by an argument on the CLI (this is the behavior of a variable assignment in GNU Make)
 * `run`: Evaluate command in a sub-shell, abort on error (equivalent to a normal command in a Makefile)
 * `run_`: Evaluate command in a sub-shell, ignore returned status code (equivalent to starting a line with a `-` in Make)
 * `log_error`, `log_info`, `log_debug`, `log_trace`, `abort`: Logging functions (set `BUILD_DEBUG=1` for debug messages)
