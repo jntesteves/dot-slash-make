@@ -45,26 +45,20 @@ upgrade_from_dash_to_bash() {
 # This function uses only shell builtins and has no external dependencies (f.e. on sed)
 # This is slower than using sed on big inputs, but faster on many invocations with small inputs
 substitute_character_builtin() (
-    char="$1"
     replacement_text="$2"
-    shift 2
-    text="$*"
     trailing_match=
-    case "$text" in
-        *"$char") [ "$ZSH_VERSION" ] || trailing_match="$replacement_text" ;;
-    esac
+    case "$3" in *"$1") [ "$ZSH_VERSION" ] || trailing_match="$replacement_text" ;; esac
     old_ifs="$IFS"
-    IFS="$char"
-    set -f # Disable globbing. This ensures word-splitting is safe
+    IFS="$1"
+    set -f # Disable globbing (aka pathname expansion)
     # shellcheck disable=2086
-    set -- $text # Create arguments list splitting at each occurrence of IFS
-    set +f       # Re-enable globbing
+    set -- $3 # Create arguments list splitting at each occurrence of IFS
+    set +f    # Re-enable globbing
     IFS="$old_ifs"
     i=0
-    arg_count="$#"
     for field in "$@"; do
         i=$((i + 1))
-        if [ "$i" -eq "$arg_count" ]; then
+        if [ "$i" -eq "$#" ]; then
             printf '%s%s' "$field" "$trailing_match"
         else
             printf '%s%s' "$field" "$replacement_text"
@@ -73,12 +67,10 @@ substitute_character_builtin() (
 )
 
 # Escape text for use in a shell script single-quoted string (shell builtin version)
-escape_single_quotes_builtin() (
-    substitute_character_builtin \' "'\\''" "$*"
-)
+escape_single_quotes_builtin() (substitute_character_builtin \' "'\\''" "$*")
 
 # Wrap all arguments in single-quotes and concatenate them
-__quote_eval_cmd() (
+__dsm__quote_eval_cmd() (
     escaped_text=
     for arg in "$@"; do
         escaped_text="${escaped_text} '$(escape_single_quotes_builtin "$arg")'"
@@ -89,17 +81,17 @@ __quote_eval_cmd() (
 # Evaluate command in a sub-shell, abort on error
 run() {
     log_info "$*"
-    __eval_cmd="$(__quote_eval_cmd "$@")"
-    log_trace "dot-slash-make: run() __eval_cmd=$__eval_cmd"
-    (eval "$__eval_cmd") || abort 'dot-slash-make: Command failed, aborting'
+    __dsm__eval_cmd="$(__dsm__quote_eval_cmd "$@")"
+    log_trace "dot-slash-make: run() __dsm__eval_cmd=$__dsm__eval_cmd"
+    (eval "$__dsm__eval_cmd") || abort 'dot-slash-make: Command failed, aborting'
 }
 
 # Evaluate command in a sub-shell, ignore returned status code
 run_() {
     log_info "$*"
-    __eval_cmd="$(__quote_eval_cmd "$@")"
-    log_trace "dot-slash-make: run_() __eval_cmd=$__eval_cmd"
-    (eval "$__eval_cmd") || log_info 'dot-slash-make: Command failed, ignoring failure status'
+    __dsm__eval_cmd="$(__dsm__quote_eval_cmd "$@")"
+    log_trace "dot-slash-make: run_() __dsm__eval_cmd=$__dsm__eval_cmd"
+    (eval "$__dsm__eval_cmd") || log_info 'dot-slash-make: Command failed, ignoring failure status'
 }
 
 # Validate if text is appropriate for a shell variable name
@@ -111,50 +103,48 @@ validate_var_name() {
 }
 
 # Check if the given name was provided as an argument in the CLI
-__is_in_cli_parameters_list() (
+__dsm__is_in_cli_parameters_list() (
     var_name="$1"
-    log_trace "dot-slash-make: __is_in_cli_parameters_list() var_name='${var_name}' __cli_parameters_list='${__cli_parameters_list}'"
-    for arg in $__cli_parameters_list; do
-        log_trace "dot-slash-make: __is_in_cli_parameters_list() loop arg='${arg}'"
+    log_trace "dot-slash-make: __dsm__is_in_cli_parameters_list() var_name='${var_name}' __dsm__cli_parameters_list='${__dsm__cli_parameters_list}'"
+    for arg in $__dsm__cli_parameters_list; do
+        log_trace "dot-slash-make: __dsm__is_in_cli_parameters_list() loop arg='${arg}'"
         [ "$var_name" = "$arg" ] && return 0
     done
     return 1
 )
 
 # Use indirection to dynamically set a variable from argument NAME=VALUE
-__set_variable_cli_override() {
-    __fn_param=
-    [ "$1" = .param ] && __fn_param=' param()' && shift
-    __fn_arguments="$*"
-    __var_name="${__fn_arguments%%=*}"
-    __var_value="${__fn_arguments#*=}"
-    if validate_var_name "$__var_name"; then
-        if [ "$__fn_param" ] && __is_in_cli_parameters_list "$__var_name"; then
-            log_debug "dot-slash-make: param() '$__var_name' found in CLI parameters list, ignoring"
+__dsm__set_variable_cli_override() {
+    __dsm__fn_param=
+    [ "$1" = .param ] && __dsm__fn_param=' param()'
+    __dsm__fn_arguments="$2"
+    __dsm__var_name="${__dsm__fn_arguments%%=*}"
+    __dsm__var_value="${__dsm__fn_arguments#*=}"
+    if validate_var_name "$__dsm__var_name"; then
+        if [ "$__dsm__fn_param" ] && __dsm__is_in_cli_parameters_list "$__dsm__var_name"; then
+            log_debug "dot-slash-make: param() '$__dsm__var_name' found in CLI parameters list, ignoring"
             return
         fi
-        eval "$__var_name='$(escape_single_quotes_builtin "$__var_value")'"
-        [ "$__fn_param" ] || __cli_parameters_list="${__cli_parameters_list}${__var_name} "
-        eval "log_debug \"dot-slash-make: __set_variable_cli_override() ${__var_name}=\$${__var_name}\""
+        eval "$__dsm__var_name='$(escape_single_quotes_builtin "$__dsm__var_value")'"
+        [ "$__dsm__fn_param" ] || __dsm__cli_parameters_list="${__dsm__cli_parameters_list}${__dsm__var_name} "
+        eval "log_debug \"dot-slash-make: __dsm__set_variable_cli_override() ${__dsm__var_name}=\$${__dsm__var_name}\""
     else
-        abort "dot-slash-make:$__fn_param Invalid variable name '$__var_name'"
+        abort "dot-slash-make:$__dsm__fn_param Invalid variable name '$__dsm__var_name'"
     fi
 }
 
 # Set variable from argument NAME=VALUE, only if it was not overridden by an argument on the CLI
-param() {
-    __set_variable_cli_override .param "$@"
-}
+param() { __dsm__set_variable_cli_override .param "$@"; }
 
-upgrade_from_dash_to_bash "$@"
-__cli_parameters_list=
-__targets=
-for __arg in "$@"; do
-    case "$__arg" in
-        [_a-zA-Z]*=*) __set_variable_cli_override "$__arg" ;;
-        -*) abort "dot-slash-make: Unrecognized option '${__arg}'" ;;
-        *) __targets="${__targets}${__arg} " ;;
+case "$BUILD_DEBUG" in *dash*) ;; *) upgrade_from_dash_to_bash "$@" ;; esac
+__dsm__cli_parameters_list=
+__dsm__targets=
+for __dsm__arg in "$@"; do
+    case "$__dsm__arg" in
+        [_a-zA-Z]*=*) __dsm__set_variable_cli_override '' "$__dsm__arg" ;;
+        -*) abort "dot-slash-make: Unrecognized option '${__dsm__arg}'" ;;
+        *) __dsm__targets="${__dsm__targets}${__dsm__arg} " ;;
     esac
 done
-[ "$__targets" ] || __targets=-
-log_debug "dot-slash-make: targets list: '${__targets}'"
+[ "$__dsm__targets" ] || __dsm__targets=-
+log_debug "dot-slash-make: targets list: '${__dsm__targets}'"

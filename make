@@ -5,7 +5,7 @@
 param BUILD_DIR=./build
 param PREFIX="${HOME}/.local"
 
-for __target in ${__targets}; do
+for __target in ${__dsm__targets}; do
     case "${__target}" in
         build | -)
             run echo build-command "${BUILD_DIR}"
