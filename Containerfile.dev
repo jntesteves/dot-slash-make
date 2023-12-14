@@ -1,4 +1,4 @@
 FROM alpine:latest
 ENV SHELL /bin/sh
 ENV HISTCONTROL ignoredups
-RUN apk add bash dash make shellcheck shfmt zsh
+RUN apk add --no-cache bash dash make mksh shellcheck shfmt zsh
