@@ -1,4 +1,3 @@
-# SPDX-License-Identifier: Unlicense
 BUILD_DIR := ./build
 PREFIX := ~/.local
 app_name=dot-slash-make
@@ -31,11 +30,11 @@ test:
 .PHONY: lint
 lint:
 	shellcheck $(script_files)
-	shfmt -p -i 4 -ci -d $(script_files)
+	shfmt -p -d $(script_files)
 
 .PHONY: format
 format:
-	shfmt -p -i 4 -ci -w $(script_files)
+	shfmt -p -w $(script_files)
 
 .PHONY: dev-image
 dev-image:
