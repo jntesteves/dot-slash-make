@@ -1,22 +1,28 @@
 # SPDX-License-Identifier: Unlicense
 BUILD_DIR := ./build
 PREFIX := ~/.local
+app_name=dot-slash-make
+script_files := $(wildcard ./*.sh ./make)
 
 .PHONY: build
 build:
-	echo build-command "$(BUILD_DIR)"
+	echo mkdir -p "$(BUILD_DIR)"
+	echo touch $(addprefix "$(BUILD_DIR)"/,a b c d e)
 
 .PHONY: install
 install:
-	echo install-command "$(PREFIX)"
+	echo install -DZ -m 644 -t $(PREFIX)/bin $(script_files)
 
 .PHONY: uninstall
 uninstall:
-	echo uninstall-command "$(PREFIX)"
+	echo rm -f $(addprefix $(PREFIX)/bin/,$(script_files))
 
 .PHONY: clean
 clean:
-	-echo clean-command "$(BUILD_DIR)"
+	-echo rm -r "$(BUILD_DIR)"
+
+.PHONY: test
+test:
 	-return 1
 	-echo 'This line is reachable because - ignores errors!'
 	return 1
@@ -24,13 +30,13 @@ clean:
 
 .PHONY: lint
 lint:
-	shellcheck ./*.sh make
-	shfmt -p -i 4 -ci -d ./*.sh make
+	shellcheck $(script_files)
+	shfmt -p -i 4 -ci -d $(script_files)
 
 .PHONY: format
 format:
-	shfmt -p -i 4 -ci -w ./*.sh make
+	shfmt -p -i 4 -ci -w $(script_files)
 
 .PHONY: dev-image
 dev-image:
-	podman build -f Containerfile.dev -t dot-slash-make-dev
+	podman build -f Containerfile.dev -t $(app_name)-dev

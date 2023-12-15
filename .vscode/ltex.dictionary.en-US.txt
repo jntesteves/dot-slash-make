@@ -1,3 +1,4 @@
+addprefix
 builtins
 cmdline
 cntrl
@@ -6,8 +7,13 @@ contr
 globbing
 ifndef
 ltex
+mksh
 NONINFRINGEMENT
+pathname
+pathname-expansion
 POSIX
+printf
+printf-style
 realpath
 shellcheck
 shfmt
