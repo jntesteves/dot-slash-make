@@ -2,23 +2,28 @@ BUILD_DIR := ./build
 PREFIX := ~/.local
 app_name=dot-slash-make
 script_files := $(wildcard ./*.sh ./make)
+ifndef NO_SELINUX
+selinux_flag := -Z
+endif
+programs := a b c d e
+artifacts := $(addprefix "$(BUILD_DIR)"/,$(programs))
 
 .PHONY: build
 build:
-	echo mkdir -p "$(BUILD_DIR)"
-	echo touch $(addprefix "$(BUILD_DIR)"/,a b c d e)
+	mkdir -p "$(BUILD_DIR)"
+	touch $(artifacts)
 
 .PHONY: install
 install:
-	echo install -DZ -m 644 -t $(PREFIX)/bin $(script_files)
+	install -D $(selinux_flag) -m 755 -t $(PREFIX)/bin $(artifacts)
 
 .PHONY: uninstall
 uninstall:
-	echo rm -f $(addprefix $(PREFIX)/bin/,$(script_files))
+	rm -f $(addprefix $(PREFIX)/bin/,$(programs))
 
 .PHONY: clean
 clean:
-	-echo rm -r "$(BUILD_DIR)"
+	-rm -r "$(BUILD_DIR)"
 
 .PHONY: test
 test:

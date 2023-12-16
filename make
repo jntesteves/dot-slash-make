@@ -6,21 +6,26 @@ param BUILD_DIR=./build
 param PREFIX="${HOME}/.local"
 app_name=dot-slash-make
 script_files=$(wildcard ./*.sh ./make)
+selinux_flag=-Z
+# In sh we can detect if the SELinux flag is supported instead of requiring a CLI parameter
+case $(install -Z 2>&1) in *'unrecognized option'*) selinux_flag='' ;; esac
+programs='a b c d e'
+artifacts=$(fmt "${BUILD_DIR}/%s" ${programs})
 
 for __target in ${__dsm__targets}; do
 	case "${__target}" in
 	build | -)
-		run echo mkdir -p "${BUILD_DIR}"
-		run echo touch $(fmt "${BUILD_DIR}/%s" a b c d e)
+		run mkdir -p "${BUILD_DIR}"
+		run touch ${artifacts}
 		;;
 	install)
-		run echo install -DZ -m 644 -t "${PREFIX}/bin" ${script_files}
+		run install -D ${selinux_flag} -m 755 -t "${PREFIX}/bin" ${artifacts}
 		;;
 	uninstall)
-		run echo rm -f $(fmt "${PREFIX}/bin/%s" ${script_files})
+		run rm -f $(fmt "${PREFIX}/bin/%s" ${programs})
 		;;
 	clean)
-		run_ echo rm -r "${BUILD_DIR}"
+		run_ rm -r "${BUILD_DIR}"
 		;;
 	test)
 		run_ return 1
