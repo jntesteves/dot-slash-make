@@ -100,7 +100,7 @@ run_() {
 	log_info "$(printf '%s ' "$@")"
 	__dsm__eval_cmd="$(__dsm__quote_eval_cmd "$@")"
 	log_trace "dot-slash-make: [run_] __dsm__eval_cmd=$__dsm__eval_cmd"
-	(eval "$__dsm__eval_cmd") || log_info "${__dsm__cmd}: [target: ${__target}] Error ${?} (ignored)"
+	(eval "$__dsm__eval_cmd") || log_warn "${__dsm__cmd}: [target: ${__target}] Error ${?} (ignored)"
 }
 
 # Validate if text is appropriate for a shell variable name
