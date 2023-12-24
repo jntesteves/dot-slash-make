@@ -35,10 +35,10 @@ for __target in ${__dsm__targets}; do
 		;;
 	lint)
 		run shellcheck ${script_files}
-		run shfmt -p -d ${script_files}
+		run shfmt -d ${script_files}
 		;;
 	format)
-		run shfmt -p -w ${script_files}
+		run shfmt -w ${script_files}
 		;;
 	dev-image)
 		run podman build -f Containerfile.dev -t ${app_name}-dev

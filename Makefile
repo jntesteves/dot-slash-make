@@ -35,11 +35,11 @@ test:
 .PHONY: lint
 lint:
 	shellcheck $(script_files)
-	shfmt -p -d $(script_files)
+	shfmt -d $(script_files)
 
 .PHONY: format
 format:
-	shfmt -p -w $(script_files)
+	shfmt -w $(script_files)
 
 .PHONY: dev-image
 dev-image:
