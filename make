@@ -9,10 +9,10 @@ script_files=$(wildcard ./*.sh ./make)
 selinux_flag=-Z
 # In sh we can detect if the SELinux flag is supported instead of requiring a CLI parameter
 case $(install -Z 2>&1) in *'unrecognized option'*) selinux_flag='' ;; esac
-programs='a b c d e'
+programs=$(list a b c d e)
 artifacts=$(fmt "${BUILD_DIR}/%s" ${programs})
 
-for __target in ${__dsm__targets}; do
+for __target in $(list_targets); do
 	case "${__target}" in
 	build | -)
 		run mkdir -p "${BUILD_DIR}"

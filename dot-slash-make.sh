@@ -37,16 +37,16 @@ upgrade_to_better_shell() {
 	case "$current_shell" in
 	# If running on dash, re-exec the script on bash if possible (for debian/ubuntu and derivatives)
 	# If mksh, re-exec on anything available (mksh performs Field Splitting inconsistently between Parameter Expansion and Command Substitution)
-	# If zsh, re-exec on anything available (zsh's sh compatibility mode is woefully incompatible, Field Splitting is unusable)
+	# If zsh, re-exec on anything available (zsh's sh compatibility mode is woefully incompatible, Field Splitting is unusable when IFS is changed)
 	dash | mksh | zsh)
 		if [ "$current_shell" != bash ] && command -v bash >/dev/null; then
-			log_debug "$current_shell detected, upgrading to bash"
+			log_debug "${current_shell} detected, upgrading to bash"
 			exec bash --posix "$0" "$@"
 		elif [ "$current_shell" != busybox ] && command -v busybox >/dev/null; then
-			log_debug "$current_shell detected, upgrading to busybox"
+			log_debug "${current_shell} detected, upgrading to busybox"
 			exec busybox "$0" "$@"
 		elif [ "$current_shell" != dash ] && command -v dash >/dev/null; then
-			log_debug "$current_shell detected, upgrading to dash"
+			log_debug "${current_shell} detected, upgrading to dash"
 			exec dash "$0" "$@"
 		fi
 		;;
@@ -92,7 +92,7 @@ run() {
 	log_info "$(printf '%s ' "$@")"
 	__dsm__eval_cmd="$(__dsm__quote_eval_cmd "$@")"
 	log_trace "dot-slash-make: [run] __dsm__eval_cmd=$__dsm__eval_cmd"
-	(eval "$__dsm__eval_cmd") || abort "${__dsm__cmd}: [target: ${__target}] Error ${?}"
+	(eval "$__dsm__eval_cmd") || abort "${0}: [target: ${__target}] Error ${?}"
 }
 
 # Evaluate command in a sub-shell, ignore returned status code
@@ -100,7 +100,7 @@ run_() {
 	log_info "$(printf '%s ' "$@")"
 	__dsm__eval_cmd="$(__dsm__quote_eval_cmd "$@")"
 	log_trace "dot-slash-make: [run_] __dsm__eval_cmd=$__dsm__eval_cmd"
-	(eval "$__dsm__eval_cmd") || log_warn "${__dsm__cmd}: [target: ${__target}] Error ${?} (ignored)"
+	(eval "$__dsm__eval_cmd") || log_warn "${0}: [target: ${__target}] Error ${?} (ignored)"
 }
 
 # Validate if text is appropriate for a shell variable name
@@ -115,8 +115,7 @@ validate_var_name() {
 __dsm__is_in_cli_parameters_list() (
 	var_name="$1"
 	log_trace "dot-slash-make: [__dsm__is_in_cli_parameters_list] var_name='${var_name}' __dsm__cli_parameters_list='${__dsm__cli_parameters_list}'"
-	for arg in $__dsm__cli_parameters_list; do
-		log_trace "dot-slash-make: [__dsm__is_in_cli_parameters_list] loop arg='${arg}'"
+	for arg in $(list_from ' ' "$__dsm__cli_parameters_list"); do
 		[ "$var_name" = "$arg" ] && return 0
 	done
 	return 1
@@ -124,31 +123,46 @@ __dsm__is_in_cli_parameters_list() (
 
 # Use indirection to dynamically set a variable from argument NAME=VALUE
 __dsm__set_variable_cli_override() {
-	__dsm__fn_arguments="$2"
-	__dsm__var_name="${__dsm__fn_arguments%%=*}"
-	__dsm__var_value="${__dsm__fn_arguments#*=}"
+	__dsm__var_name="${2%%=*}"
+	__dsm__var_value="${2#*=}"
 	if validate_var_name "$__dsm__var_name"; then
 		if [ "$1" ] && __dsm__is_in_cli_parameters_list "$__dsm__var_name"; then
-			log_debug "dot-slash-make:${1:+" [$1]"} '$__dsm__var_name' overridden by command line argument"
+			log_debug "dot-slash-make: [${1}] '$__dsm__var_name' overridden by command line argument"
 			return
 		fi
-		eval "$__dsm__var_name='$(escape_single_quotes_builtin "$__dsm__var_value")'"
+		eval "${__dsm__var_name}='$(escape_single_quotes_builtin "$__dsm__var_value")'"
 		[ "$1" ] || __dsm__cli_parameters_list="${__dsm__cli_parameters_list}${__dsm__var_name} "
-		eval "log_debug \"dot-slash-make: [__dsm__set_variable_cli_override] ${__dsm__var_name}=\$${__dsm__var_name}\""
+		eval "log_debug \"dot-slash-make: [${1:-__dsm__set_variable_cli_override}] ${__dsm__var_name}=\$${__dsm__var_name}\""
 	else
-		abort "${__dsm__cmd}:${1:+" [$1]"} Invalid parameter name '$__dsm__var_name'"
+		abort "${0}:${1:+" [$1]"} Invalid parameter name '${__dsm__var_name}'"
 	fi
 }
 
 # Set variable from argument NAME=VALUE, only if it was not overridden by an argument on the CLI
 param() { __dsm__set_variable_cli_override param "$@"; }
 
-# Use format_string to format each subsequent argument, return a list separated by IFS
+# zsh does not trim dangling field separators
+__list_compat() { [ "$ZSH_VERSION" ] && printf '%s' "${1%?}" || printf '%s' "$1"; }
+
+# Turn arguments into a list of items separated by IFS
+list() { [ "$#" != 0 ] && __list_compat "$(printf "%s${IFS%"${IFS#?}"}" "$@")"; }
+
+# $(list_from separator string): Turn string into a list splitting at each occurrence of separator
+list_from() (
+	ft="${IFS%"${IFS#?}"}" # Use first character of IFS as field terminator
+	IFS="$1"
+	str="$2"
+	[ "$ZSH_VERSION" ] && case "$2" in *["$1"]) str="${2%?}" ;; esac
+	# shellcheck disable=SC2086
+	[ "$str" ] && __list_compat "$(printf "%s${ft}" $str)"
+)
+
+# Use pattern to format each subsequent argument, return a list separated by IFS
 fmt() (
-	format_string="$1"
+	pattern="$1"
 	shift
 	# shellcheck disable=SC2059
-	[ "$#" != 0 ] && printf "${format_string}${IFS%"${IFS#?}"}" "$@"
+	[ "$#" != 0 ] && __list_compat "$(printf "${pattern}${IFS%"${IFS#?}"}" "$@")"
 )
 
 # Perform tilde- and pathname-expansion (globbing) on arguments
@@ -156,28 +170,30 @@ fmt() (
 wildcard() (
 	set +f                 # Enable globbing
 	ft="${IFS%"${IFS#?}"}" # Use first character of IFS as field terminator
+	buffer=
 	for pattern in "$@"; do
 		case "$pattern" in
 		'~') pattern="$HOME" ;;
 		'~'/*) pattern="${HOME}${pattern#'~'}" ;;
 		esac
-		# shellcheck disable=SC2086
-		for file in $(printf "%s${ft}" $pattern); do
-			[ -e "$file" ] && printf "%s${ft}" "$file"
+		for file in $pattern; do
+			[ -e "$file" ] && buffer="${buffer}${file}${ft}"
 		done
 	done
+	__list_compat "$buffer"
 )
+
+list_targets() { list_from ' ' "$__dsm__targets"; }
 
 set -f # Disable globbing (aka pathname expansion)
 case "$MAKE_DEBUG" in *shell*) ;; *) upgrade_to_better_shell "$@" ;; esac
-__dsm__cmd="$0"
 __dsm__cli_parameters_list=
 __dsm__targets=
 __target=
 for __dsm__arg in "$@"; do
 	case "$__dsm__arg" in
 	[_a-zA-Z]*=*) __dsm__set_variable_cli_override '' "$__dsm__arg" ;;
-	-*) abort "${__dsm__cmd}: invalid option '${__dsm__arg}'" ;;
+	-*) abort "${0}: invalid option '${__dsm__arg}'" ;;
 	*) __dsm__targets="${__dsm__targets}${__dsm__arg} " ;;
 	esac
 done

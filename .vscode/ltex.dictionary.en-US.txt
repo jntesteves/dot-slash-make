@@ -2,6 +2,7 @@ addprefix
 builtins
 cmdline
 cntrl
+compat
 Containerfile
 contr
 globbing
