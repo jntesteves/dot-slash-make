@@ -59,20 +59,16 @@ upgrade_to_better_shell() {
 substitute_character_builtin() (
 	set -f # Disable globbing (aka pathname expansion)
 	IFS="$1"
-	replacement="$2"
 	trailing_match=
-	case "$3" in *"$1") [ "$ZSH_VERSION" ] || trailing_match="$replacement" ;; esac
-	# shellcheck disable=2086
-	set -- $3 # Create arguments list splitting at each occurrence of IFS
-	i=0
-	for field in "$@"; do
-		i=$((i + 1))
-		if [ "$i" -eq "$#" ]; then
-			printf '%s%s' "$field" "$trailing_match"
-		else
-			printf '%s%s' "$field" "$replacement"
-		fi
+	case "$3" in *"$1") [ "$ZSH_VERSION" ] || trailing_match="$2" ;; esac
+	last_field=
+	first=1
+	for field in $3; do
+		[ "$first" ] || printf '%s%s' "$last_field" "$2"
+		last_field="$field"
+		first=
 	done
+	printf '%s%s' "$last_field" "$trailing_match"
 )
 
 # Escape text for use in a shell script single-quoted string (shell builtin version)
