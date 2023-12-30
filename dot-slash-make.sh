@@ -74,19 +74,17 @@ substitute_character_builtin() (
 # Escape text for use in a shell script single-quoted string (shell builtin version)
 escape_single_quotes_builtin() { substitute_character_builtin \' "'\\''" "$1"; }
 
-# Wrap all arguments in single-quotes and concatenate them
-__dsm__quote_eval_cmd() (
-	escaped_text=
+# Wrap all arguments in single-quotes and concatenate them separated by spaces
+quote_for_eval() (
 	for arg in "$@"; do
-		escaped_text="${escaped_text} '$(escape_single_quotes_builtin "$arg")'"
+		printf "'%s' " "$(escape_single_quotes_builtin "$arg")"
 	done
-	printf '%s\n' "$escaped_text"
 )
 
 # Evaluate command in a sub-shell, abort on error
 run() {
 	log_info "$(printf '%s ' "$@")"
-	__dsm__eval_cmd="$(__dsm__quote_eval_cmd "$@")"
+	__dsm__eval_cmd="$(quote_for_eval "$@")"
 	log_trace "dot-slash-make: [run] __dsm__eval_cmd=$__dsm__eval_cmd"
 	(eval "$__dsm__eval_cmd") || abort "${0}: [target: ${__target}] Error ${?}"
 }
@@ -94,7 +92,7 @@ run() {
 # Evaluate command in a sub-shell, ignore returned status code
 run_() {
 	log_info "$(printf '%s ' "$@")"
-	__dsm__eval_cmd="$(__dsm__quote_eval_cmd "$@")"
+	__dsm__eval_cmd="$(quote_for_eval "$@")"
 	log_trace "dot-slash-make: [run_] __dsm__eval_cmd=$__dsm__eval_cmd"
 	(eval "$__dsm__eval_cmd") || log_warn "${0}: [target: ${__target}] Error ${?} (ignored)"
 }
