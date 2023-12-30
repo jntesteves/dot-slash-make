@@ -32,7 +32,7 @@ dot-slash-make is meant to be vendored (copied) into your repository. Just copy 
 * `log_error`, `log_warn`, `log_info`, `log_debug`, `log_trace`, `abort`: Logging functions (set `MAKE_DEBUG` to `1` or `trace` to see debug and trace messages)
 * `$(fmt pattern args…)`: Applies a printf-style format pattern to a list of arguments. Like `printf`, but doesn't print the pattern on empty arguments list.
 * `$(list args…)`: Turn arguments into a list of items separated by IFS. Most useful when IFS is changed globally.
-* `$(list_from separator string)`: Turn string into a list splitting at each occurrence of separator. Most useful when IFS is changed globally.
+* `$(list_from string [separator])`: Turn string into a list splitting at each occurrence of separator. If separator isn't provided the default value of IFS is used (space|tab|line-feed).
 * `param NAME=VALUE`: Set variable NAME=VALUE, only if it was not overridden by an argument on the CLI (this is the behavior of a variable assignment in GNU Make)
 * `run command [args…]`: Evaluate command in a sub-shell, abort on error (equivalent to a normal command in a Makefile)
 * `run_ command [args…]`: Evaluate command in a sub-shell, ignore returned status code (equivalent to starting a command line with a `-` in a Makefile)

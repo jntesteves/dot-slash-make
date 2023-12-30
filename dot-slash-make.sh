@@ -111,7 +111,7 @@ validate_var_name() {
 __dsm__is_in_cli_parameters_list() (
 	var_name="$1"
 	log_trace "dot-slash-make: [__dsm__is_in_cli_parameters_list] var_name='${var_name}' __dsm__cli_parameters_list='${__dsm__cli_parameters_list}'"
-	for arg in $(list_from ' ' "$__dsm__cli_parameters_list"); do
+	for arg in $(list_from "$__dsm__cli_parameters_list"); do
 		[ "$var_name" = "$arg" ] && return 0
 	done
 	return 1
@@ -143,12 +143,13 @@ __list_compat() { [ "$ZSH_VERSION" ] && printf '%s' "${1%?}" || printf '%s' "$1"
 # Turn arguments into a list of items separated by IFS
 list() { [ "$#" != 0 ] && __list_compat "$(printf "%s${IFS%"${IFS#?}"}" "$@")"; }
 
-# $(list_from separator string): Turn string into a list splitting at each occurrence of separator
+# $(list_from string [separator]): Turn string into a list splitting at each occurrence of separator
+# If separator isn't provided the default value of IFS is used (space|tab|line-feed)
 list_from() (
 	ft="${IFS%"${IFS#?}"}" # Use first character of IFS as field terminator
-	IFS="$1"
-	str="$2"
-	[ "$ZSH_VERSION" ] && case "$2" in *["$1"]) str="${2%?}" ;; esac
+	IFS="${2:-"$(printf ' \t\n')"}"
+	str="$1"
+	[ "$ZSH_VERSION" ] && case "$1" in *["$2"]) str="${1%?}" ;; esac
 	# shellcheck disable=SC2086
 	[ "$str" ] && __list_compat "$(printf "%s${ft}" $str)"
 )
@@ -179,7 +180,7 @@ wildcard() (
 	__list_compat "$buffer"
 )
 
-list_targets() { list_from ' ' "$__dsm__targets"; }
+list_targets() { list_from "$__dsm__targets"; }
 
 set -f # Disable globbing (aka pathname expansion)
 case "$MAKE_DEBUG" in *shell*) ;; *) upgrade_to_better_shell "$@" ;; esac
