@@ -134,47 +134,48 @@ __dsm__set_variable_cli_override() {
 # Set variable from argument NAME=VALUE, only if it was not overridden by an argument on the CLI
 param() { __dsm__set_variable_cli_override param "$@"; }
 
-# zsh does not trim dangling field separators
-__list_compat() { [ "$ZSH_VERSION" ] && printf '%s' "${1%?}" || printf '%s' "$1"; }
-
 # Turn arguments into a list of items separated by IFS
-list() { [ "$#" != 0 ] && __list_compat "$(printf "%s${IFS%"${IFS#?}"}" "$@")"; }
+list() { [ "$#" != 0 ] && printf '%s' "$*" && [ ! "$ZSH_VERSION" ] && printf '%s' "${IFS%"${IFS#?}"}"; }
 
 # $(list_from string [separator]): Turn string into a list splitting at each occurrence of separator
 # If separator isn't provided the default value of IFS is used (space|tab|line-feed)
 list_from() (
-	ft="${IFS%"${IFS#?}"}" # Use first character of IFS as field terminator
-	IFS="${2:-"$(printf ' \t\n')"}"
+	set -f # Disable globbing
 	str="$1"
 	[ "$ZSH_VERSION" ] && case "$1" in *["$2"]) str="${1%?}" ;; esac
+	old_ifs="$IFS"
+	IFS="${2:-"$(printf ' \t\n')"}"
 	# shellcheck disable=SC2086
-	[ "$str" ] && __list_compat "$(printf "%s${ft}" $str)"
+	IFS="$old_ifs" list $str
 )
 
 # Use pattern to format each subsequent argument, return a list separated by IFS
-fmt() (
-	pattern="$1"
+fmt() {
+	__pattern="$1"
 	shift
 	# shellcheck disable=SC2059
-	[ "$#" != 0 ] && __list_compat "$(printf "${pattern}${IFS%"${IFS#?}"}" "$@")"
-)
+	[ "$#" != 0 ] && list_from "$(printf "${__pattern}${IFS%"${IFS#?}"}" "$@")" "${IFS%"${IFS#?}"}"
+}
 
 # Perform tilde- and pathname-expansion (globbing) on arguments
 # Similar behavior as the wildcard function in GNU Make
 wildcard() (
-	set +f                 # Enable globbing
-	ft="${IFS%"${IFS#?}"}" # Use first character of IFS as field terminator
+	old_ifs="$IFS"
+	IFS=
 	buffer=
 	for pattern in "$@"; do
 		case "$pattern" in
 		'~') pattern="$HOME" ;;
 		'~'/*) pattern="${HOME}${pattern#'~'}" ;;
 		esac
+		set +f # Enable globbing
 		for file in $pattern; do
-			[ -e "$file" ] && buffer="${buffer}${file}${ft}"
+			set -f
+			# shellcheck disable=SC2086
+			[ -e "$file" ] && buffer="$(IFS="$old_ifs" && list $buffer "$file")"
 		done
 	done
-	__list_compat "$buffer"
+	printf '%s' "$buffer"
 )
 
 list_targets() { list_from "$__dsm__targets"; }
