@@ -107,10 +107,9 @@ validate_var_name() {
 
 # Check if the given name was provided as an argument in the CLI
 __dsm__is_in_cli_parameters_list() (
-	var_name="$1"
-	log_trace "dot-slash-make: [__dsm__is_in_cli_parameters_list] var_name='${var_name}' __dsm__cli_parameters_list='${__dsm__cli_parameters_list}'"
+	log_trace "dot-slash-make: [__dsm__is_in_cli_parameters_list] var_name='${1}' __dsm__cli_parameters_list='${__dsm__cli_parameters_list}'"
 	for arg in $(list_from "$__dsm__cli_parameters_list"); do
-		[ "$var_name" = "$arg" ] && return 0
+		[ "$1" = "$arg" ] && return 0
 	done
 	return 1
 )
