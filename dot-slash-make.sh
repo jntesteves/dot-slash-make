@@ -5,11 +5,11 @@
 # This file is part of dot-slash-make https://codeberg.org/jntesteves/dot-slash-make
 # Do NOT make changes to this file, your commands go in the ./make file
 #
-log_error() { printf 'ERROR %s\n' "$@" >&2; }
-log_warn() { printf 'WARN %s\n' "$@" >&2; }
-log_info() { printf '%s\n' "$@"; }
-log_debug() { :; } && [ "$MAKE_DEBUG" ] && log_debug() { printf 'DEBUG %s\n' "$@"; }
-log_trace() { :; } && case "$MAKE_DEBUG" in *trace*) log_trace() { printf 'TRACE %s\n' "$@"; } ;; esac
+log_error() (IFS=' ' && printf 'ERROR %s\n' "$*" >&2)
+log_warn() (IFS=' ' && printf 'WARN %s\n' "$*" >&2)
+log_info() (IFS=' ' && printf '%s\n' "$*")
+log_debug() { :; } && [ "$MAKE_DEBUG" ] && log_debug() (IFS=' ' && printf 'DEBUG %s\n' "$*")
+log_trace() { :; } && case "$MAKE_DEBUG" in *trace*) log_trace() (IFS=' ' && printf 'TRACE %s\n' "$*") ;; esac
 abort() {
 	log_error "$@"
 	exit 1
@@ -83,7 +83,7 @@ quote_for_eval() (
 
 # Evaluate command in a sub-shell, abort on error
 run() {
-	log_info "$(printf '%s ' "$@")"
+	log_info "$@"
 	__dsm__eval_cmd="$(quote_for_eval "$@")"
 	log_trace "dot-slash-make: [run] __dsm__eval_cmd=$__dsm__eval_cmd"
 	(eval "$__dsm__eval_cmd") || abort "${0}: [target: ${__target}] Error ${?}"
@@ -91,7 +91,7 @@ run() {
 
 # Evaluate command in a sub-shell, ignore returned status code
 run_() {
-	log_info "$(printf '%s ' "$@")"
+	log_info "$@"
 	__dsm__eval_cmd="$(quote_for_eval "$@")"
 	log_trace "dot-slash-make: [run_] __dsm__eval_cmd=$__dsm__eval_cmd"
 	(eval "$__dsm__eval_cmd") || log_warn "${0}: [target: ${__target}] Error ${?} (ignored)"
