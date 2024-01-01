@@ -134,8 +134,23 @@ __dsm__set_variable_cli_override() {
 # Set variable from argument NAME=VALUE, only if it was not overridden by an argument on the CLI
 param() { __dsm__set_variable_cli_override param "$@"; }
 
+# Test if any of the arguments is itself a list according to the current value of IFS
+is_list() (
+	for item in "$@"; do
+		case "$item" in *["$IFS"]*) return 0 ;; esac
+	done
+	return 1
+)
+
 # Turn arguments into a list of items separated by IFS
-list() { [ "$#" != 0 ] && printf '%s' "$*" && [ ! "$ZSH_VERSION" ] && printf '%s' "${IFS%"${IFS#?}"}"; }
+list() {
+	if is_list "$@"; then
+		printf 'list error: list items cannot be lists\n' >&2
+		return 1
+	fi
+	[ "$#" != 0 ] && printf '%s' "$*" && [ ! "$ZSH_VERSION" ] && printf '%s' "${IFS%"${IFS#?}"}"
+	return 0
+}
 
 # $(list_from string [separator]): Turn string into a list splitting at each occurrence of separator
 # If separator isn't provided the default value of IFS is used (space|tab|line-feed)
@@ -172,7 +187,7 @@ wildcard() (
 		for file in $pattern; do
 			set -f
 			# shellcheck disable=SC2086
-			[ -e "$file" ] && buffer="$(IFS="$old_ifs" && list $buffer "$file")"
+			[ -e "$file" ] && { buffer="$(IFS="$old_ifs" && list $buffer "$file")" || return 1; }
 		done
 	done
 	printf '%s' "$buffer"
