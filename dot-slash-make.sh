@@ -36,18 +36,20 @@ upgrade_to_better_shell() {
 	current_shell="$(basename "$(real_proc_cmdline)" 2>/dev/null)"
 	case "$current_shell" in
 	# If running on dash, re-exec the script on bash if possible (for debian/ubuntu and derivatives)
-	# If mksh, re-exec on anything available (mksh performs Field Splitting inconsistently between Parameter Expansion and Command Substitution)
-	# If zsh, re-exec on anything available (zsh's sh compatibility mode is woefully incompatible, Field Splitting is unusable when IFS is changed)
-	dash | mksh | zsh)
+	# If *ksh, re-exec on anything available (ksh variants perform Field Splitting inconsistently between Parameter Expansion and Command Substitution; likely a bug, but widespread)
+	# If zsh, re-exec on anything available (zsh's sh compatibility mode is woefully incompatible, Field Splitting doesn't trim a dangling Field Separator when IFS is changed)
+	dash | *ksh | zsh)
 		if [ "$current_shell" != bash ] && command -v bash >/dev/null; then
 			log_debug "${current_shell} detected, upgrading to bash"
 			exec bash --posix "$0" "$@"
 		elif [ "$current_shell" != busybox ] && command -v busybox >/dev/null; then
 			log_debug "${current_shell} detected, upgrading to busybox"
-			exec busybox "$0" "$@"
+			exec busybox sh "$0" "$@"
 		elif [ "$current_shell" != dash ] && command -v dash >/dev/null; then
 			log_debug "${current_shell} detected, upgrading to dash"
 			exec dash "$0" "$@"
+		else
+			log_debug "${current_shell} detected, but no better shell found"
 		fi
 		;;
 	esac
