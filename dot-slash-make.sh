@@ -150,8 +150,8 @@ list() {
 		printf 'list error: list items cannot be lists\n' >&2
 		return 1
 	fi
-	[ "$#" != 0 ] && printf '%s' "$*" && [ ! "$ZSH_VERSION" ] && printf '%s' "${IFS%"${IFS#?}"}"
-	return 0
+	# shellcheck disable=SC2015
+	[ "$#" -gt 0 ] && printf '%s' "$*" && [ ! "$ZSH_VERSION" ] && printf '%s' "${IFS%"${IFS#?}"}" || :
 }
 
 # $(list_from string [separator]): Turn string into a list splitting at each occurrence of separator
@@ -169,9 +169,12 @@ list_from() (
 # Use pattern to format each subsequent argument, return a list separated by IFS
 fmt() {
 	__pattern="$1"
-	shift
+	shift || {
+		printf 'fmt error: a format pattern must be provided\n' >&2
+		return 1
+	}
 	# shellcheck disable=SC2059
-	[ "$#" != 0 ] && list_from "$(printf "${__pattern}${IFS%"${IFS#?}"}" "$@")" "${IFS%"${IFS#?}"}"
+	if [ "$#" -gt 0 ]; then list_from "$(printf "${__pattern}${IFS%"${IFS#?}"}" "$@")" "${IFS%"${IFS#?}"}"; fi
 }
 
 # Perform tilde- and pathname-expansion (globbing) on arguments
