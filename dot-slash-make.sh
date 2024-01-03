@@ -200,7 +200,8 @@ wildcard() (
 
 list_targets() { list_from "$__dsm__targets"; }
 
-set -f # Disable globbing (aka pathname expansion)
+set -f                 # Disable globbing (aka pathname expansion)
+IFS="$(printf '\037')" # Use ASCII 0x1F as field separator for "quasi-lossless" lists
 case "$MAKE_DEBUG" in *shell*) ;; *) upgrade_to_better_shell "$@" ;; esac
 __dsm__cli_parameters_list=
 __dsm__targets=
