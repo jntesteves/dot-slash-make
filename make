@@ -8,7 +8,7 @@ app_name=dot-slash-make
 script_files=$(wildcard ./*.sh ./make)
 selinux_flag=-Z
 # In sh we can detect if the SELinux flag is supported instead of requiring a CLI parameter
-case $(install -Z 2>&1) in *'unrecognized option'*) selinux_flag='' ;; esac
+case $(install -Z 2>&1) in *'unrecognized option'*) selinux_flag= ;; esac
 programs=$(list a b c d e)
 artifacts=$(fmt "${BUILD_DIR}/%s" ${programs})
 

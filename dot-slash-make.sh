@@ -123,7 +123,7 @@ __dsm__set_variable_cli_override() {
 	if validate_var_name "$__dsm__var_name"; then
 		if [ "$1" ] && __dsm__is_in_cli_parameters_list "$__dsm__var_name"; then
 			log_debug "dot-slash-make: [${1}] '$__dsm__var_name' overridden by command line argument"
-			return
+			return 0
 		fi
 		eval "${__dsm__var_name}='$(escape_single_quotes_builtin "$__dsm__var_value")'"
 		[ "$1" ] || __dsm__cli_parameters_list="${__dsm__cli_parameters_list}${__dsm__var_name} "
