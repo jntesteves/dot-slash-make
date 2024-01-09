@@ -17,7 +17,7 @@ This repository includes an example [Makefile](Makefile) which is equivalent to 
 For most people, writing a ./make file might actually be easier than writing a Makefile. The ./make file is written in shell script, a language many already know, while a Makefile is written in a [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) full of idiosyncrasies few people fully understand (.PHONY? `=` vs `:=`). Shell script also enjoys great tooling to analyze your code, like this repository's use of [shellcheck](https://www.shellcheck.net) and [shfmt](https://github.com/mvdan/sh).
 
 The following CLI behaviors are copied from Make:
-* Parameter overrides can be set on the CLI in arguments of the form NAME=VALUE, f.e. `./make install PREFIX=/local`
+* Parameter overrides can be set on the CLI in arguments of the form NAME=VALUE, f.e. `./make install PREFIX=/usr/local`
   * Caveat: this form does not allow tilde expansion `~/` (except on bash, which does tilde expansion when parsing this kind of argument)  
   Prefer using the variable `$HOME` instead of tilde expansion
 * Any other arguments not starting with a `-` (dash) are considered targets
@@ -31,13 +31,13 @@ dot-slash-make is meant to be vendored (copied) into your repository. Just copy 
 
 * `$(fmt pattern args…)`: Applies a printf-style format pattern to a list of arguments. Like `printf`, but doesn't print the pattern on empty arguments list
 * `$(list args…)`: Turn arguments into a list of items separated by IFS
-  * The IFS variable is changed to ASCII control code `0x1F` in ./make to allow for "quasi-lossless" lists/arrays in pure POSIX shell script. There's no risk of accidental field splitting, so quoting variables is not necessary
+  * The IFS variable is changed to ASCII control code `0x1F` in dot-slash-make to allow for "quasi-lossless" lists/arrays in pure POSIX shell script. There's almost no risk of accidental field splitting, so quoting variables is not necessary
 * `$(list_from string [separator])`: Turn string into a list splitting at each occurrence of separator. If separator isn't provided the default value of IFS is used (space|tab|line-feed)
 * `param NAME=VALUE`: Set variable NAME=VALUE, only if it was not overridden by an argument on the CLI (this is the behavior of a variable assignment in GNU Make)
 * `run command [args…]`: Evaluate command in a sub-shell, abort on error (equivalent to a normal command in a Makefile)
 * `run_ command [args…]`: Evaluate command in a sub-shell, ignore returned status code (equivalent to starting a command line with a `-` in a Makefile)
 * `$(wildcard args…)`: Performs globbing on arguments. Similar to GNU Make's [wildcard](https://www.gnu.org/software/make/manual/make.html#Wildcard-Function) function
-  * Implicit globbing is disabled in ./make, as that is safer and easier to use. You must explicitly call this function when you want pathname-expansion to happen on some text
+  * Implicit globbing is disabled in dot-slash-make, as that is safer and easier to use. You must explicitly call this function when you want Pathname Expansion to happen on some text
 
 There is example usage of these functions in the sample [./make](make) file.
 
@@ -45,8 +45,12 @@ There is example usage of these functions in the sample [./make](make) file.
 
 Used internally by dot-slash-make, but exposed publicly because they can be useful.
 
-* `log_error`, `log_warn`, `log_info`, `log_debug`, `log_trace`, `abort`: Logging functions (set `MAKE_DEBUG` to `1` or `trace` to see debug and trace messages)
+* `abort`, `log_error`, `log_warn`, `log_info`, `log_debug`, `log_trace`: Logging functions (set `MAKE_DEBUG` to `1` or `trace` to see debug and trace messages)
+* `$(escape_single_quotes_builtin text)`: Escape text for use in a shell script single-quoted string (shell builtin version)
+* `is_list args…`: Test if any of the arguments is itself a list according to the current value of IFS
 * `$(quote_for_eval args…)`: Wrap all arguments in single-quotes and concatenate them separated by spaces, the output escaped appropriately for passing to `eval`
+* `$(substitute_character_builtin char replacement text)`: Substitute every instance of character in text with replacement string. This function uses only shell builtins and has no external dependencies (f.e. on `sed`). This is slower than using `sed` on a big input, but faster on many invocations with small inputs
+* `validate_var_name text`: Validate if text is appropriate for a shell variable name
 
 ## Dependencies
 
@@ -72,7 +76,7 @@ It is a goal of this project to remain small, in the single-digit kilobytes rang
 ## Similar projects
 
 * [GNU Make](https://www.gnu.org/software/make/) – The C build system often (ab)used as a command runner
-* [just](https://github.com/casey/just) – A command runner inspired by Make, written in Rust
+* [just](https://github.com/casey/just) – A command runner inspired by Make
 
 Plus every other software build system offers its own way to save and run commands. But only ./make runs everywhere with zero dependencies, no DSL, in a few kilobytes of shell script.
 

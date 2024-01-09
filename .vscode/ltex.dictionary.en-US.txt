@@ -1,4 +1,5 @@
 addprefix
+builtin
 builtins
 cmdline
 cntrl
@@ -11,6 +12,7 @@ ltex
 mksh
 NONINFRINGEMENT
 pathname
+Pathname
 pathname-expansion
 POSIX
 printf
