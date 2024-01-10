@@ -68,12 +68,16 @@ Due to this, you might want to use dot-slash-make.sh as a library in other conte
 * `DSM_SKIP_CLI_OPTIONS=1`: Don't parse CLI option flags, as that will abort the program on unknown options
 * `DSM_SKIP_CLI_VARIABLES=1`: Don't parse CLI variable overrides, as that can abort the program on invalid arguments. You may want to skip this variable when the default behavior of parsing variables from the command-line is desired
 
-```
+```shell
 # Source dot-slash-make.sh with no side effects
 DSM_SKIP_SHELL_UPGRADE=1 DSM_SKIP_CLI_OPTIONS=1 DSM_SKIP_CLI_VARIABLES=1 . ./dot-slash-make.sh
 ```
 
-Note that when setting `DSM_SKIP_CLI_OPTIONS` and `DSM_SKIP_CLI_VARIABLES`, you will have to write your own arguments parsing code, as you normally would when not using dot-slash-make.
+Note that when setting `DSM_SKIP_CLI_OPTIONS=1` and `DSM_SKIP_CLI_VARIABLES=1`, you will have to write your own arguments parsing code, as you normally would when not using dot-slash-make. You may also want to expose a DEBUG variable specific to your program, for example, for a program called my-app, you might want to expose a variable called MY_APP_DEBUG to your users. In this case, your source line should look like:
+
+```shell
+MAKE_DEBUG=$MY_APP_DEBUG DSM_SKIP_SHELL_UPGRADE=1 DSM_SKIP_CLI_OPTIONS=1 DSM_SKIP_CLI_VARIABLES=1 . ./dot-slash-make.sh
+```
 
 ## Dependencies
 
