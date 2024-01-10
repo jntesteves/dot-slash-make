@@ -50,7 +50,30 @@ Used internally by dot-slash-make, but exposed publicly because they can be usef
 * `is_list args…`: Test if any of the arguments is itself a list according to the current value of IFS
 * `$(quote_for_eval args…)`: Wrap all arguments in single-quotes and concatenate them separated by spaces, the output escaped appropriately for passing to `eval`
 * `$(substitute_character_builtin char replacement text)`: Substitute every instance of character in text with replacement string. This function uses only shell builtins and has no external dependencies (f.e. on `sed`). This is slower than using `sed` on a big input, but faster on many invocations with small inputs
+* `upgrade_to_better_shell`: Detect if running on a problematic shell, and try to re-exec the script on a better shell
+  * This function is called by default when dot-slash-make.sh is sourced (unless `DSM_SKIP_SHELL_UPGRADE=1` is defined), to make it easier to write ./make scripts that will run on most systems without having to worry about every edge-case on shells that are buggy or not very compatible with Bourne sh and POSIX. It also tries to upgrade from dash to bash on Debian/Ubuntu and derivatives, even though dash is a good POSIX shell, but may be too limiting for some people
 * `validate_var_name text`: Validate if text is appropriate for a shell variable name
+
+## Beyond ./make (disabling side effects)
+
+dot-slash-make offers many useful functions and shell behavior changes that make writing shell scripts a much nicer experience:
+
+* No accidental globbing
+* No accidental field splitting
+* Native lists in pure POSIX shell
+
+Due to this, you might want to use dot-slash-make.sh as a library in other contexts when you need to write POSIX shell scripts, even when not trying to emulate GNU Make. To allow that, the following variables exist to disable parts of dot-slash-make that cause side effects on load, allowing to safely import its functions in any shell script:
+
+* `DSM_SKIP_SHELL_UPGRADE=1`: Don't call function `upgrade_to_better_shell` on sourcing the script. You may want to skip this variable as this side effect is often desirable, and this function never aborts on failure
+* `DSM_SKIP_CLI_OPTIONS=1`: Don't parse CLI option flags, as that will abort the program on unknown options
+* `DSM_SKIP_CLI_VARIABLES=1`: Don't parse CLI variable overrides, as that can abort the program on invalid arguments. You may want to skip this variable when the default behavior of parsing variables from the command-line is desired
+
+```
+# Source dot-slash-make.sh with no side effects
+DSM_SKIP_SHELL_UPGRADE=1 DSM_SKIP_CLI_OPTIONS=1 DSM_SKIP_CLI_VARIABLES=1 . ./dot-slash-make.sh
+```
+
+Note that when setting `DSM_SKIP_CLI_OPTIONS` and `DSM_SKIP_CLI_VARIABLES`, you will have to write your own arguments parsing code, as you normally would when not using dot-slash-make.
 
 ## Dependencies
 

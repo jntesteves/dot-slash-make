@@ -202,14 +202,14 @@ list_targets() { list_from "$__dsm__targets"; }
 
 set -f                 # Disable globbing (aka pathname expansion)
 IFS="$(printf '\037')" # Use ASCII 0x1F as field separator for "quasi-lossless" lists
-case "$MAKE_DEBUG" in *shell*) ;; *) upgrade_to_better_shell "$@" ;; esac
+[ "$DSM_SKIP_SHELL_UPGRADE" ] || upgrade_to_better_shell "$@"
 __dsm__cli_parameters_list=
 __dsm__targets=
 __target=
 for __dsm__arg in "$@"; do
 	case "$__dsm__arg" in
-	[_a-zA-Z]*=*) __dsm__set_variable_cli_override '' "$__dsm__arg" ;;
-	-*) abort "${0}: invalid option '${__dsm__arg}'" ;;
+	[_a-zA-Z]*=*) [ "$DSM_SKIP_CLI_VARIABLES" ] || __dsm__set_variable_cli_override '' "$__dsm__arg" ;;
+	-*) [ "$DSM_SKIP_CLI_OPTIONS" ] || abort "${0}: invalid option '${__dsm__arg}'" ;;
 	*) __dsm__targets="${__dsm__targets}${__dsm__arg} " ;;
 	esac
 done
