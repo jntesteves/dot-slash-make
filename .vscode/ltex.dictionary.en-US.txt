@@ -9,6 +9,7 @@ contr
 globbing
 ifndef
 ltex
+MAKECMDGOALS
 mksh
 NONINFRINGEMENT
 pathname

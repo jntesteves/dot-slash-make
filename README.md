@@ -29,14 +29,15 @@ dot-slash-make is meant to be vendored (copied) into your repository. Just copy 
 
 ### Included functions
 
-* `$(fmt pattern args…)`: Applies a printf-style format pattern to a list of arguments. Like `printf`, but doesn't print the pattern on empty arguments list
+* `$(fmt pattern args…)`: Apply a printf-style format pattern to a list of arguments. Like `printf`, but doesn't print the pattern on empty arguments list
 * `$(list args…)`: Turn arguments into a list of items separated by IFS
   * The IFS variable is changed to ASCII control code `0x1F` in dot-slash-make to allow for "quasi-lossless" lists/arrays in pure POSIX shell script. There's almost no risk of accidental field splitting, so quoting variables is not necessary
 * `$(list_from text [separator])`: Turn text into a list splitting at each occurrence of separator. Separator is an optional string containing one or more characters, all of which will be used as separators. If separator isn't provided, the default value of IFS is used (space|tab|line-feed)
+* `$(list_targets)`: Print the list of targets specified on the command line. Will be set to a single `-` (dash) if no targets were specified (so the default target can be matched with a `| -` on a case statement). Similar to the special variable MAKECMDGOALS in a Makefile
 * `param NAME=VALUE`: Set variable NAME=VALUE, only if it was not overridden by an argument on the CLI (this is the behavior of a variable assignment in GNU Make)
 * `run command [args…]`: Evaluate command in a sub-shell, abort on error (equivalent to a normal command in a Makefile)
 * `run_ command [args…]`: Evaluate command in a sub-shell, ignore returned status code (equivalent to starting a command line with a `-` in a Makefile)
-* `$(wildcard args…)`: Performs globbing on arguments. Similar to GNU Make's [wildcard](https://www.gnu.org/software/make/manual/make.html#Wildcard-Function) function
+* `$(wildcard args…)`: Perform globbing on arguments. Similar to the [wildcard](https://www.gnu.org/software/make/manual/make.html#Wildcard-Function) function in a Makefile
   * Implicit globbing is disabled in dot-slash-make, as that is safer and easier to use. You must explicitly call this function when you want Pathname Expansion to happen on some text
 
 There is example usage of these functions in the sample [./make](make) file.
@@ -66,7 +67,7 @@ Due to this, you might want to use dot-slash-make.sh as a library in other conte
 
 * `DSM_SKIP_SHELL_UPGRADE=1`: Don't call function `upgrade_to_better_shell` on sourcing the script. You may want to skip this variable as this side effect is often desirable, and this function never aborts on failure
 * `DSM_SKIP_CLI_OPTIONS=1`: Don't parse CLI option flags, as that will abort the program on unknown options
-* `DSM_SKIP_CLI_VARIABLES=1`: Don't parse CLI variable overrides, as that can abort the program on invalid arguments. You may want to skip this variable when the default behavior of parsing variables from the command-line is desired
+* `DSM_SKIP_CLI_VARIABLES=1`: Don't parse CLI variable overrides, as that can abort the program on invalid arguments. You may want to skip this variable when the default behavior of parsing variables from the command line is desired
 
 ```shell
 # Source dot-slash-make.sh with no side effects
