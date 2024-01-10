@@ -1,5 +1,6 @@
 BUILD_DIR := ./build
 PREFIX := ~/.local
+FLAGS := -a -b -c
 app_name=dot-slash-make
 script_files := $(wildcard ./*.sh ./make)
 ifndef NO_SELINUX
@@ -30,7 +31,7 @@ test:
 	-return 1
 	-echo 'This line is reachable because - ignores errors!'
 	return 1
-	echo 'This line in unreachable'
+	echo 'This line in unreachable' $(FLAGS)
 
 .PHONY: lint
 lint:

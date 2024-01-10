@@ -32,7 +32,7 @@ dot-slash-make is meant to be vendored (copied) into your repository. Just copy 
 * `$(fmt pattern args…)`: Applies a printf-style format pattern to a list of arguments. Like `printf`, but doesn't print the pattern on empty arguments list
 * `$(list args…)`: Turn arguments into a list of items separated by IFS
   * The IFS variable is changed to ASCII control code `0x1F` in dot-slash-make to allow for "quasi-lossless" lists/arrays in pure POSIX shell script. There's almost no risk of accidental field splitting, so quoting variables is not necessary
-* `$(list_from string [separator])`: Turn string into a list splitting at each occurrence of separator. If separator isn't provided the default value of IFS is used (space|tab|line-feed)
+* `$(list_from text [separator])`: Turn text into a list splitting at each occurrence of separator. Separator is an optional string containing one or more characters, all of which will be used as separators. If separator isn't provided, the default value of IFS is used (space|tab|line-feed)
 * `param NAME=VALUE`: Set variable NAME=VALUE, only if it was not overridden by an argument on the CLI (this is the behavior of a variable assignment in GNU Make)
 * `run command [args…]`: Evaluate command in a sub-shell, abort on error (equivalent to a normal command in a Makefile)
 * `run_ command [args…]`: Evaluate command in a sub-shell, ignore returned status code (equivalent to starting a command line with a `-` in a Makefile)

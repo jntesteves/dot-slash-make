@@ -4,6 +4,8 @@ DSM_SKIP_CLI_OPTIONS='' DSM_SKIP_CLI_VARIABLES='' . ./dot-slash-make.sh
 
 param BUILD_DIR=./build
 param PREFIX="${HOME}/.local"
+param FLAGS='-a -b -c'
+FLAGS=$(list_from "${FLAGS}")
 app_name=dot-slash-make
 script_files=$(wildcard ./*.sh ./make)
 selinux_flag=-Z
@@ -31,7 +33,7 @@ for __target in $(list_targets); do
 		run_ return 1
 		run_ echo 'This line is reachable because run_ ignores errors!'
 		run return 1
-		run echo 'This line in unreachable'
+		run echo 'This line in unreachable' ${FLAGS}
 		;;
 	lint)
 		run shellcheck ${script_files}

@@ -154,7 +154,7 @@ list() {
 	[ "$#" -gt 0 ] && printf '%s' "$*" && [ ! "$ZSH_VERSION" ] && printf '%s' "${IFS%"${IFS#?}"}" || :
 }
 
-# $(list_from string [separator]): Turn string into a list splitting at each occurrence of separator
+# $(list_from text [separator]): Turn text into a list splitting at each occurrence of separator
 # If separator isn't provided the default value of IFS is used (space|tab|line-feed)
 list_from() (
 	set -f # Disable globbing
