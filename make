@@ -31,9 +31,9 @@ for __target in $(list_targets); do
 		;;
 	test)
 		run_ return 1
-		run_ echo 'This line is reachable because run_ ignores errors!'
+		echo 'This line is reachable because run_ ignores errors!'
 		run return 1
-		run echo 'This line in unreachable' ${FLAGS}
+		echo 'This line in unreachable' ${FLAGS}
 		;;
 	lint)
 		run shellcheck ${script_files}

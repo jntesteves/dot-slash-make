@@ -29,9 +29,9 @@ clean:
 .PHONY: test
 test:
 	-return 1
-	-echo 'This line is reachable because - ignores errors!'
+	@echo 'This line is reachable because - ignores errors!'
 	return 1
-	echo 'This line in unreachable' $(FLAGS)
+	@echo 'This line in unreachable' $(FLAGS)
 
 .PHONY: lint
 lint:
