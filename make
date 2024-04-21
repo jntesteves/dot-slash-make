@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 # shellcheck disable=SC2046,SC2086
 DSM_SKIP_CLI_OPTIONS='' DSM_SKIP_CLI_VARIABLES='' . ./dot-slash-make.sh
 
