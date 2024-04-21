@@ -58,8 +58,8 @@ upgrade_to_better_shell() {
 # Substitute every instance of character in text with replacement string
 # This function uses only shell builtins and has no external dependencies (f.e. on sed)
 # This is slower than using sed on a big input, but faster on many invocations with small inputs
-substitute_character_builtin() (
-	set -f # Disable globbing (aka pathname expansion)
+substitute_character() (
+	set -f # Disable Pathname Expansion (aka globbing)
 	IFS="$1"
 	trailing_match=
 	case "$3" in *"$1") [ "$ZSH_VERSION" ] || trailing_match="$2" ;; esac
@@ -74,12 +74,12 @@ substitute_character_builtin() (
 )
 
 # Escape text for use in a shell script single-quoted string (shell builtin version)
-escape_single_quotes_builtin() { substitute_character_builtin \' "'\\''" "$1"; }
+escape_single_quotes() { substitute_character \' "'\\''" "$1"; }
 
 # Wrap all arguments in single-quotes and concatenate them separated by spaces
 quote_for_eval() (
 	for arg in "$@"; do
-		printf "'%s' " "$(escape_single_quotes_builtin "$arg")"
+		printf "'%s' " "$(escape_single_quotes "$arg")"
 	done
 )
 
@@ -125,7 +125,7 @@ __dsm__set_variable_cli_override() {
 			log_debug "dot-slash-make: [${1}] '$__dsm__var_name' overridden by command line argument"
 			return 0
 		fi
-		eval "${__dsm__var_name}='$(escape_single_quotes_builtin "$__dsm__var_value")'"
+		eval "${__dsm__var_name}='$(escape_single_quotes "$__dsm__var_value")'"
 		[ "$1" ] || __dsm__cli_parameters_list="${__dsm__cli_parameters_list}${__dsm__var_name} "
 		eval "log_debug \"dot-slash-make: [${1:-__dsm__set_variable_cli_override}] ${__dsm__var_name}=\$${__dsm__var_name}\""
 	else
