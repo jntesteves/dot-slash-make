@@ -34,9 +34,9 @@ dot-slash-make is meant to be vendored (copied) into your repository. Just copy 
   * The IFS variable is changed to ASCII control code `0x1F` in dot-slash-make to allow for "quasi-lossless" lists/arrays in pure POSIX shell script. There's almost no risk of accidental field splitting, so quoting variables is not necessary
 * `$(list_from text [separator])`: Turn text into a list splitting at each occurrence of separator. Separator is an optional string containing one or more characters, all of which will be used as separators. If separator isn't provided, the default value of IFS is used (space|tab|line-feed)
 * `$(list_targets)`: Print the list of targets specified on the command line. Will be set to a single `-` (dash) if no targets were specified (so the default target can be matched with a `| -` on a case statement). Similar to the special variable MAKECMDGOALS in a Makefile
-* `param NAME=VALUE`: Set variable NAME=VALUE, only if it was not overridden by an argument on the CLI (this is the behavior of a variable assignment in GNU Make)
-* `run command [args…]`: Evaluate command in a sub-shell, abort on error (equivalent to a normal command in a Makefile)
-* `run_ command [args…]`: Evaluate command in a sub-shell, ignore returned status code (equivalent to starting a command line with a `-` in a Makefile)
+* `param NAME=VALUE`: Set variable NAME=VALUE, only if it was not overridden by an argument on the CLI (this is the behavior of a variable assignment in a Makefile)
+* `run command [args…]`: Evaluate command in a sub-shell, abort on error (equivalent to a normal command in a Makefile recipe)
+* `run_ command [args…]`: Evaluate command in a sub-shell, ignore returned status code (equivalent to starting a command line with a `-` in a Makefile recipe)
 * `$(wildcard args…)`: Perform globbing on arguments. Similar to the [wildcard](https://www.gnu.org/software/make/manual/make.html#Wildcard-Function) function in a Makefile
   * Implicit globbing is disabled in dot-slash-make, as that is safer and easier to use. You must explicitly call this function when you want Pathname Expansion to happen on some text
 
@@ -103,10 +103,10 @@ It is a goal of this project to remain small, in the single-digit kilobytes rang
 
 ## Similar projects
 
-* [GNU Make](https://www.gnu.org/software/make/) – The C build system often (ab)used as a command runner
-* [just](https://github.com/casey/just) – A command runner inspired by Make
+* [GNU Make](https://www.gnu.org/software/make/) – The classic build system often (ab)used as a command runner
+* [just](https://github.com/casey/just) – Another command runner inspired by Make
 
-Plus every other software build system offers its own way to save and run commands. But only ./make runs everywhere with zero dependencies, no DSL, in a few kilobytes of shell script.
+Plus every other software build system offers its own way to save and run commands. But only ./make runs everywhere with zero dependencies, no DSL, in a few kilobytes of portable shell script.
 
 ## License
 
