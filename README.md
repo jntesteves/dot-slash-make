@@ -29,6 +29,8 @@ dot-slash-make is meant to be vendored (copied) into your repository. Just copy 
 
 ### Included functions
 
+* `abort`, `log_error`, `log_warn`, `log_info`, `log_debug`, `log_trace`: Logging functions (set `MAKE_DEBUG` to `1` or `trace` to see debug and trace messages)
+* `echo [args…]`: Portable echo that takes no options for consistent behavior across platforms
 * `$(fmt pattern args…)`: Apply a printf-style format pattern to a list of arguments. Like `printf`, but doesn't print the pattern on empty arguments list
 * `$(list args…)`: Turn arguments into a list of items separated by IFS
   * The IFS variable is changed to ASCII control code `0x1F` in dot-slash-make to allow for "quasi-lossless" lists/arrays in pure POSIX shell script. There's almost no risk of accidental field splitting, so quoting variables is not necessary
@@ -46,7 +48,6 @@ There is example usage of these functions in the sample [./make](make) file.
 
 Used internally by dot-slash-make, but exposed publicly because they can be useful.
 
-* `abort`, `log_error`, `log_warn`, `log_info`, `log_debug`, `log_trace`: Logging functions (set `MAKE_DEBUG` to `1` or `trace` to see debug and trace messages)
 * `escape_single_quotes text`: Escape text for use in a shell script single-quoted string (shell builtin version)
 * `is_list args…`: Test if any of the arguments is itself a list according to the current value of IFS
 * `$(quote_for_eval args…)`: Wrap all arguments in single-quotes and concatenate them separated by spaces, the output escaped appropriately for passing to `eval`

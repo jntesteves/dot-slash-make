@@ -5,6 +5,7 @@
 # This file is part of dot-slash-make https://codeberg.org/jntesteves/dot-slash-make
 # Do NOT make changes to this file, your commands go in the ./make file
 #
+echo() (IFS=' ' && printf '%s\n' "$*")
 log_error() (IFS=' ' && printf 'ERROR %s\n' "$*" >&2)
 log_warn() (IFS=' ' && printf 'WARN %s\n' "$*" >&2)
 log_info() (IFS=' ' && printf '%s\n' "$*")
