@@ -12,8 +12,9 @@ log_info() (IFS=' ' && printf '%s\n' "$*")
 log_debug() { :; } && [ "$MAKE_DEBUG" ] && log_debug() (IFS=' ' && printf 'DEBUG %s\n' "$*")
 log_trace() { :; } && case "$MAKE_DEBUG" in *trace*) log_trace() (IFS=' ' && printf 'TRACE %s\n' "$*") ;; esac
 abort() {
-	log_error "$@"
-	exit 1
+	__abort__status=${2:-$?}
+	log_error "$1" || :
+	exit "$__abort__status"
 }
 
 # Get real path to shell interpreter of current process
