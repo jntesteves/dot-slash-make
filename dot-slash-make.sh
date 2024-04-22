@@ -20,16 +20,16 @@ abort() {
 # Get real path to shell interpreter of current process
 real_proc_cmdline() (
 	if [ -r /proc/$$/cmdline ]; then
-		proc_cmdline="$(cut -d '' -f1 /proc/$$/cmdline 2>/dev/null)" || return 1
+		proc_cmdline="$(cut -d '' -f1 /proc/$$/cmdline 2>/dev/null)" || return
 	else
-		proc_cmdline="$(ps -p $$ -o comm= 2>/dev/null)" || return 1
+		proc_cmdline="$(ps -p $$ -o comm= 2>/dev/null)" || return
 	fi
 	# On Alpine Linux the cut command above gives weird result, remove everything from the first blank space to the end
 	proc_cmdline="${proc_cmdline%%[[:space:][:cntrl:]]*}"
 	# Remove leading "-" added by macOS
 	proc_cmdline="${proc_cmdline#-}"
-	proc_cmdline="$(command -v "$proc_cmdline" 2>/dev/null)" || return 1
-	proc_cmdline="$(realpath "$proc_cmdline" 2>/dev/null)" || return 1
+	proc_cmdline="$(command -v "$proc_cmdline" 2>/dev/null)" || return
+	proc_cmdline="$(realpath "$proc_cmdline" 2>/dev/null)" || return
 	printf '%s\n' "$proc_cmdline"
 )
 
