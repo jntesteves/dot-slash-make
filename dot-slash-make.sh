@@ -77,27 +77,16 @@ substitute_character() (
 # Escape text for use in a shell script single-quoted string (shell builtin version)
 escape_single_quotes() { substitute_character \' "'\\''" "$1"; }
 
-# Wrap all arguments in single-quotes and concatenate them separated by spaces
-quote_for_eval() (
-	for arg in "$@"; do
-		printf "'%s' " "$(escape_single_quotes "$arg")"
-	done
-)
-
-# Evaluate command in a sub-shell, abort on error
+# Run command in a sub-shell, abort on error
 run() {
 	log_info "$@"
-	__dsm__eval_cmd="$(quote_for_eval "$@")"
-	log_trace "dot-slash-make: [run] __dsm__eval_cmd=$__dsm__eval_cmd"
-	(eval "$__dsm__eval_cmd") || abort "${0}: [target: ${__target}] Error ${?}"
+	("$@") || abort "${0}: [target: ${__target}] Error ${?}"
 }
 
-# Evaluate command in a sub-shell, ignore returned status code
+# Run command in a sub-shell, ignore returned status code
 run_() {
 	log_info "$@"
-	__dsm__eval_cmd="$(quote_for_eval "$@")"
-	log_trace "dot-slash-make: [run_] __dsm__eval_cmd=$__dsm__eval_cmd"
-	(eval "$__dsm__eval_cmd") || log_warn "${0}: [target: ${__target}] Error ${?} (ignored)"
+	("$@") || log_warn "${0}: [target: ${__target}] Error ${?} (ignored)"
 }
 
 # Validate if text is appropriate for a shell variable name
