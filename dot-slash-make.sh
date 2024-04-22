@@ -143,7 +143,8 @@ list_from() (
 	str="$1"
 	[ "$ZSH_VERSION" ] && case "$1" in *["$2"]) str="${1%?}" ;; esac
 	old_ifs="$IFS"
-	IFS="${2:-"$(printf ' \t\n')"}"
+	IFS="${2:-' 	''
+'}"
 	# shellcheck disable=SC2086
 	IFS="$old_ifs" list $str
 )
