@@ -89,12 +89,10 @@ run_() {
 	("$@") || log_warn "${0}: [target: ${__target}] Error ${?} (ignored)"
 }
 
-# Validate if text is appropriate for a shell variable name
-validate_var_name() {
-	case "$1" in
-	*[!_a-zA-Z0-9]*) return 1 ;;
-	[!_a-zA-Z]*) return 1 ;;
-	esac
+# Use indirection to dynamically assign a variable from argument NAME=VALUE
+assign_variable() {
+	case "${1%%=*}" in *[!_a-zA-Z0-9]* | [!_a-zA-Z]*) return 2 ;; esac
+	eval "${1%%=*}='$(escape_single_quotes "${1#*=}")'"
 }
 
 # Check if the given name was provided as an argument in the CLI
@@ -106,21 +104,15 @@ __dsm__is_in_cli_parameters_list() (
 	return 1
 )
 
-# Use indirection to dynamically set a variable from argument NAME=VALUE
 __dsm__set_variable_cli_override() {
 	__dsm__var_name="${2%%=*}"
-	__dsm__var_value="${2#*=}"
-	if validate_var_name "$__dsm__var_name"; then
-		if [ "$1" ] && __dsm__is_in_cli_parameters_list "$__dsm__var_name"; then
-			log_debug "dot-slash-make: [${1}] '$__dsm__var_name' overridden by command line argument"
-			return 0
-		fi
-		eval "${__dsm__var_name}='$(escape_single_quotes "$__dsm__var_value")'"
-		[ "$1" ] || __dsm__cli_parameters_list="${__dsm__cli_parameters_list}${__dsm__var_name} "
-		eval "log_debug \"dot-slash-make: [${1:-__dsm__set_variable_cli_override}] ${__dsm__var_name}=\$${__dsm__var_name}\""
-	else
-		abort "${0}:${1:+" [$1]"} Invalid parameter name '${__dsm__var_name}'"
+	if [ "$1" ] && __dsm__is_in_cli_parameters_list "$__dsm__var_name"; then
+		log_debug "dot-slash-make: [${1}] '${__dsm__var_name}' overridden by command line argument"
+		return 0
 	fi
+	assign_variable "$2" || abort "${0}:${1:+" [$1]"} Invalid parameter name '${__dsm__var_name}'"
+	[ "$1" ] || __dsm__cli_parameters_list="${__dsm__cli_parameters_list}${__dsm__var_name} "
+	eval "log_debug \"dot-slash-make: [${1:-__dsm__set_variable_cli_override}] ${__dsm__var_name}=\$${__dsm__var_name}\""
 }
 
 # Set variable from argument NAME=VALUE, only if it was not overridden by an argument on the CLI
