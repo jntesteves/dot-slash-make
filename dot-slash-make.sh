@@ -126,32 +126,39 @@ is_list() (
 	return 1
 )
 
+list_length() { printf '%s' "$#"; }
+
+# Test if lists should have a trailing field separator in the current shell (most do, zsh differs)
+# shellcheck disable=SC2086
+__list__is_terminated() { __l=x${IFS%"${IFS#?}"} && [ "$(list_length $__l)" -eq 1 ]; }
+
 # Turn arguments into a list of items separated by IFS
-list() {
+list() (
 	if is_list "$@"; then
 		printf 'list error: list items cannot be lists\n' >&2
 		return 1
 	fi
-	# shellcheck disable=SC2015
-	[ "$#" -gt 0 ] && printf '%s' "$*" && [ ! "$ZSH_VERSION" ] && printf '%s' "${IFS%"${IFS#?}"}" || :
-}
+	lt=
+	__list__is_terminated && lt=${IFS%"${IFS#?}"}
+	[ "$#" -eq 0 ] || printf '%s' "${*}${lt}"
+)
 
 # $(list_from text [separator]): Turn text into a list splitting at each occurrence of separator
 # If separator isn't provided the default value of IFS is used (space|tab|line-feed)
 list_from() (
 	set -f # Disable globbing
-	str="$1"
-	[ "$ZSH_VERSION" ] && case "$1" in *["$2"]) str="${1%?}" ;; esac
-	old_ifs="$IFS"
-	IFS="${2:-' 	''
-'}"
+	str=$1
+	__list__is_terminated || case "$1" in *["$2"]) str="${1%?}" ;; esac
+	outer_ifs=$IFS
+	IFS=${2:-' 	''
+'}
 	# shellcheck disable=SC2086
-	IFS="$old_ifs" list $str
+	IFS=$outer_ifs list $str
 )
 
 # Use pattern to format each subsequent argument, return a list separated by IFS
 fmt() {
-	__pattern="$1"
+	__pattern=$1
 	shift || {
 		printf 'fmt error: a format pattern must be provided\n' >&2
 		return 1
@@ -163,19 +170,19 @@ fmt() {
 # Perform tilde- and pathname-expansion (globbing) on arguments
 # Similar behavior as the wildcard function in GNU Make
 wildcard() (
-	old_ifs="$IFS"
+	outer_ifs=$IFS
 	IFS=
 	buffer=
 	for pattern in "$@"; do
 		case "$pattern" in
-		'~') pattern="$HOME" ;;
+		'~') pattern=$HOME ;;
 		'~'/*) pattern="${HOME}${pattern#'~'}" ;;
 		esac
 		set +f # Enable globbing
 		for file in $pattern; do
 			set -f
 			# shellcheck disable=SC2086
-			[ -e "$file" ] && { buffer="$(IFS="$old_ifs" && list $buffer "$file")" || return 1; }
+			[ -e "$file" ] && { buffer=$(IFS=$outer_ifs && list $buffer "$file") || return; }
 		done
 	done
 	printf '%s' "$buffer"
@@ -183,8 +190,8 @@ wildcard() (
 
 list_targets() { list_from "$__dsm__targets"; }
 
-set -f                 # Disable globbing (aka pathname expansion)
-IFS="$(printf '\037')" # Use ASCII 0x1F as field separator for "quasi-lossless" lists
+set -f               # Disable globbing (aka pathname expansion)
+IFS=$(printf '\037') # Use ASCII 0x1F as field separator for "quasi-lossless" lists
 [ "$DSM_SKIP_SHELL_UPGRADE" ] || upgrade_to_better_shell "$@"
 __dsm__cli_parameters_list=
 __dsm__targets=
