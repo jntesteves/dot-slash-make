@@ -17,46 +17,6 @@ abort() {
 	exit "$__abort__status"
 }
 
-# Get real path to shell interpreter of current process
-real_proc_cmdline() (
-	if [ -r /proc/$$/cmdline ]; then
-		proc_cmdline="$(cut -d '' -f1 /proc/$$/cmdline 2>/dev/null)" || return
-	else
-		proc_cmdline="$(ps -p $$ -o comm= 2>/dev/null)" || return
-	fi
-	# On Alpine Linux the cut command above gives weird result, remove everything from the first blank space to the end
-	proc_cmdline="${proc_cmdline%%[[:space:][:cntrl:]]*}"
-	# Remove leading "-" added by macOS
-	proc_cmdline="${proc_cmdline#-}"
-	proc_cmdline="$(command -v "$proc_cmdline" 2>/dev/null)" || return
-	proc_cmdline="$(realpath "$proc_cmdline" 2>/dev/null)" || return
-	printf '%s\n' "$proc_cmdline"
-)
-
-# Detect if running on a problematic shell, and try to re-exec the script on a better shell
-upgrade_to_better_shell() {
-	current_shell="$(basename "$(real_proc_cmdline)" 2>/dev/null)"
-	case "$current_shell" in
-	# If running on dash, re-exec the script on bash if possible (for debian/ubuntu and derivatives)
-	# If *ksh, re-exec on anything available (ksh variants perform Field Splitting inconsistently between Parameter Expansion and Command Substitution; likely a bug, but widespread)
-	# If zsh, re-exec on anything available (zsh's sh compatibility mode is woefully incompatible, Field Splitting doesn't trim a dangling Field Separator when IFS is changed)
-	dash | *ksh | zsh)
-		if [ "$current_shell" != bash ] && command -v bash >/dev/null; then
-			log_debug "${current_shell} detected, upgrading to bash"
-			exec bash --posix "$0" "$@"
-		elif [ "$current_shell" != busybox ] && command -v busybox >/dev/null; then
-			log_debug "${current_shell} detected, upgrading to busybox"
-			exec busybox sh "$0" "$@"
-		elif [ "$current_shell" != dash ] && command -v dash >/dev/null; then
-			log_debug "${current_shell} detected, upgrading to dash"
-			exec dash "$0" "$@"
-		else
-			log_debug "${current_shell} detected, but no better shell found"
-		fi
-		;;
-	esac
-}
-
 # Substitute every instance of character in text with replacement string
 # This function uses only shell builtins and has no external dependencies (f.e. on sed)
 # This is slower than using sed on a big input, but faster on many invocations with small inputs
@@ -192,7 +152,6 @@ list_targets() { list_from "$__dsm__targets"; }
 
 set -f               # Disable globbing (aka pathname expansion)
 IFS=$(printf '\037') # Use ASCII 0x1F as field separator for "quasi-lossless" lists
-[ "$DSM_SKIP_SHELL_UPGRADE" ] || upgrade_to_better_shell "$@"
 __dsm__cli_parameters_list=
 __dsm__targets=
 __target=
