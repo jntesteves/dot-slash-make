@@ -1,4 +1,4 @@
 FROM docker.io/library/alpine:3
 ENV SHELL /bin/sh
 ENV HISTCONTROL ignoredups
-RUN apk add --no-cache bash dash make mksh shellcheck shfmt zsh
+RUN apk add --no-cache bash dash git make mksh shellcheck shfmt zsh
