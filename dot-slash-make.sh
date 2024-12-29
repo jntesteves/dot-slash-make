@@ -19,34 +19,20 @@ esac
 
 nice__log__log__no_color=
 case "${MAKE_LOG_LEVEL-}" in *no-color*) nice__log__log__no_color=1 ;; *color*) nice__log__log__no_color= ;; esac
-if ! [ -t 2 ] || [ "${NO_COLOR-}" ]; then nice__log__log__no_color=1; fi
-nice__log__log__with_date=
-case "${MAKE_LOG_LEVEL-}" in *no-date*) nice__log__log__with_date= ;; *date*) nice__log__log__with_date=1 ;; esac
+if ! [ -t 2 ] || [ "${NO_COLOR-}" ] || [ "${TERM-}" = dumb ]; then nice__log__log__no_color=1; fi
 
-if [ "$nice__log__log__no_color" ] && ! [ "$nice__log__log__with_date" ]; then
+if [ "$nice__log__log__no_color" ]; then
 	nice__log__log__log_error() { :; } && if nice__log__log__log_is_level 1; then nice__log__log__log_error() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf 'ERROR %s\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
 	nice__log__log__log_warn() { :; } && if nice__log__log__log_is_level 2; then nice__log__log__log_warn() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf 'WARN %s\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
 	nice__log__log__log_info() { :; } && if nice__log__log__log_is_level 3; then nice__log__log__log_info() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '%s\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
 	nice__log__log__log_debug() { :; } && if nice__log__log__log_is_level 4; then nice__log__log__log_debug() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf 'DEBUG %s\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
 	nice__log__log__log_trace() { :; } && if nice__log__log__log_is_level 5; then nice__log__log__log_trace() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf 'TRACE %s\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-elif ! [ "$nice__log__log__no_color" ] && ! [ "$nice__log__log__with_date" ]; then
+else
 	nice__log__log__log_error() { :; } && if nice__log__log__log_is_level 1; then nice__log__log__log_error() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[1;31m\002''ERROR''\001\033[0;31m\002'' %s''\001\033[m\002''\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
 	nice__log__log__log_warn() { :; } && if nice__log__log__log_is_level 2; then nice__log__log__log_warn() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[1;33m\002''WARN''\001\033[0;33m\002'' %s''\001\033[m\002''\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
 	nice__log__log__log_info() { :; } && if nice__log__log__log_is_level 3; then nice__log__log__log_info() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[1;32m\002''''\001\033[m\002''%s\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
 	nice__log__log__log_debug() { :; } && if nice__log__log__log_is_level 4; then nice__log__log__log_debug() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[1;36m\002''DEBUG''\001\033[m\002'' %s\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
 	nice__log__log__log_trace() { :; } && if nice__log__log__log_is_level 5; then nice__log__log__log_trace() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[1;35m\002''TRACE''\001\033[m\002'' %s\n' "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-elif [ "$nice__log__log__no_color" ] && [ "$nice__log__log__with_date" ]; then
-	nice__log__log__log_error() { :; } && if nice__log__log__log_is_level 1; then nice__log__log__log_error() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '%s ERROR %s\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-	nice__log__log__log_warn() { :; } && if nice__log__log__log_is_level 2; then nice__log__log__log_warn() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '%s WARN %s\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-	nice__log__log__log_info() { :; } && if nice__log__log__log_is_level 3; then nice__log__log__log_info() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '%s %s\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-	nice__log__log__log_debug() { :; } && if nice__log__log__log_is_level 4; then nice__log__log__log_debug() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '%s DEBUG %s\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-	nice__log__log__log_trace() { :; } && if nice__log__log__log_is_level 5; then nice__log__log__log_trace() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '%s TRACE %s\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-elif ! [ "$nice__log__log__no_color" ] && [ "$nice__log__log__with_date" ]; then
-	nice__log__log__log_error() { :; } && if nice__log__log__log_is_level 1; then nice__log__log__log_error() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[90m\002''%s ''\001\033[1;31m\002''ERROR''\001\033[0;31m\002'' %s''\001\033[m\002''\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-	nice__log__log__log_warn() { :; } && if nice__log__log__log_is_level 2; then nice__log__log__log_warn() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[90m\002''%s ''\001\033[1;33m\002''WARN''\001\033[0;33m\002'' %s''\001\033[m\002''\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-	nice__log__log__log_info() { :; } && if nice__log__log__log_is_level 3; then nice__log__log__log_info() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[90m\002''%s ''\001\033[1;32m\002''''\001\033[m\002''%s\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-	nice__log__log__log_debug() { :; } && if nice__log__log__log_is_level 4; then nice__log__log__log_debug() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[90m\002''%s ''\001\033[1;36m\002''DEBUG''\001\033[m\002'' %s\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
-	nice__log__log__log_trace() { :; } && if nice__log__log__log_is_level 5; then nice__log__log__log_trace() { nice__log__log__outer_ifs=$IFS && IFS=' ' && { printf '\001\033[90m\002''%s ''\001\033[1;35m\002''TRACE''\001\033[m\002'' %s\n' "$(date -I'seconds')" "$*" >&2 || :; } && IFS=$nice__log__log__outer_ifs; }; fi
 fi
 
 log_error() { nice__log__log__log_error "$@"; }
